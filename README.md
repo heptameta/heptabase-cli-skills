@@ -1,6 +1,6 @@
 Agent Skills for use with [Heptabase](https://heptabase.com/).
 
-These skills follow the [Agent Skills specification](https://agentskills.io/specification) so they can be used by any skills-compatible agent, including Claude Code and Codex CLI.
+These skills follow the [Agent Skills specification](https://agentskills.io/specification) so they can be used by any skills-compatible agent, including Claude Code, Codex CLI, and Cursor.
 
 ## Installation
 
@@ -26,6 +26,10 @@ Add the contents of this repo to a `.claude` folder in the root of the project y
 Copy the `skills/` directory into your Codex skills path (typically `~/.codex/skills`). See the [Agent Skills specification](https://agentskills.io/specification) for the standard skill format.
 
 Codex sandbox note: if Heptabase starts but Codex says the CLI server is not ready, see [Codex sandbox troubleshooting](skills/heptabase-cli/references/codex-sandbox.md).
+
+### Cursor (Marketplace)
+
+Install from the Cursor Marketplace panel by searching for "Heptabase". See the [Cursor plugins docs](https://cursor.com/docs/plugins) for details.
 
 ### OpenCode
 
@@ -56,6 +60,8 @@ For `npx skills` installs, rerun:
 ```
 npx skills add git@github.com:heptameta/heptabase-cli-skills.git
 ```
+
+For Cursor marketplace installs, update the plugin from the Cursor Marketplace panel after the new version is published.
 
 For OpenCode installs, pull the latest repo:
 
