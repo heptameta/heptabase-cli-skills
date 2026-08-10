@@ -3,13 +3,13 @@ name: heptabase-cli
 description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link — read cards, journals, and whiteboards by the ID in the URL instead of opening a browser (agent browsers are not logged in). Supports listing and searching cards, creating and editing notes and journals, tags and properties, reading parsed PDF and audio/video transcript content, exporting local files, managing whiteboard cards, and browsing AI Tutor goals, courses, and lessons.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
-  heptabase-cli-version-range: "0.4.x"
+  heptabase-cli-version-range: "0.5.x"
 ---
 
 ## Prerequisites
 
 - CLI installed from the desktop app. The command is `heptabase` on macOS/Linux; Windows installs `heptabase.cmd` for cmd/PowerShell and a `heptabase` shim for POSIX shells.
-- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.4.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
+- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.5.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
 
 ## Command discovery
 
@@ -28,7 +28,10 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **Recent cards:** `heptabase card list --sort createdTime --direction descending --limit 20`
 - **Today's journal:** `heptabase journal read $(date +%Y-%m-%d)`
 - **Search cards by keyword:** `heptabase card list -q "<keyword>" --limit 20`
-- **Create a note from markdown:** `heptabase note create --content "# Title\n\nBody"`.
+- **Create a note from markdown:** `heptabase note create --content "# Title\n\nBody"` (marks Created by AI by default).
+- **Create a human-owned note:** `heptabase note create --no-created-by-ai --content "# Title\n\nBody"`.
+- **Create today's journal from markdown:** `heptabase journal create --content "Body"` (marks Created by AI by default).
+- **Create a human-owned journal:** `heptabase journal create --no-created-by-ai --content "Body"`.
 - **Append markdown to a note:** `heptabase note append <cardId> --content "More content"`.
 - **Edit note content with JSON save:** first read `references/card-content-schema.md`, then use `heptabase note read <cardId>`, modify the returned ProseMirror JSON, and save with `heptabase note save <cardId> --content-md5 <contentMd5> --content-file <path>`.
 - **List tag properties:** `heptabase tag properties <tagId>`
@@ -57,6 +60,10 @@ The `<workspaceId>` segment in the URL is not needed by the CLI — extract only
 ## Note and journal card content editing
 
 Use `create` / `append` with Markdown for ordinary writing. Before calling `heptabase note save` / `heptabase journal save` with ProseMirror JSON, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
+
+## Created by AI marking
+
+`note create` and `journal create` mark content as Created by AI by default. Before deciding whether to pass `--no-created-by-ai`, you MUST read `references/created-by-ai.md`.
 
 ## Property editing
 
