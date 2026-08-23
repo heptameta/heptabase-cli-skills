@@ -1,7 +1,7 @@
 {
   "name": "heptabase",
-  "version": "1.5.0",
-  "description": "Interact with Heptabase using the CLI to manage notes, journals, tags, cards, files, whiteboards, goals, courses, and lessons. Use when working with Heptabase.",
+  "version": "1.6.0",
+  "description": "Use the Heptabase CLI for notes, journals, tags, files, complete whiteboard layout, mind maps, screenshots, goals, courses, and lessons.",
   "author": {
     "name": "Heptabase"
   },
