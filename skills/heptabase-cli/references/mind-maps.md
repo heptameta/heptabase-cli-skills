@@ -16,7 +16,7 @@ Read this together with `whiteboard.md`. A mind map is an editable rooted tree w
 | Type | Use |
 | --- | --- |
 | `textNode` | Default concise label owned by the mind map. Plain text only. |
-| `cardNode` | A regular Card whose independent identity matters. It may create a Card, reference one, or consume a Card placement. PDF and media Cards are not supported as Card nodes. |
+| `cardNode` | A regular Card whose independent identity matters. It may create a Card, reference one, or consume a Card placement. Only regular Cards are supported; PDF, web, media, and journal sources are not. |
 | `highlightElementNode` | Consume an existing standalone Highlight Element placement. The command cannot create a new Highlight Element. |
 | `textElementNode` | Create a visual Text Element or consume an existing standalone Text Element placement. |
 

@@ -81,6 +81,4 @@ cp -R skills/heptabase-cli ~/.agents/skills/heptabase-cli
 <!-- prettier-ignore -->
 | Skill                                 | Description                                                                                                                                                                |
 |---|---|
-| [heptabase-cli](skills/heptabase-cli) | Use Heptabase CLI `0.6.x` for notes, journals, tags, cards, files, complete whiteboard layout and mind-map work, schematic screenshots, goals, courses, and lessons |
-
-Whiteboard agents should read the [whiteboard workflow](skills/heptabase-cli/references/whiteboard.md) before layout work and the [mind-map reference](skills/heptabase-cli/references/mind-maps.md) before creating or changing a mind map.
+| [heptabase-cli](skills/heptabase-cli) | Use Heptabase CLI for notes, journals, tags, cards, files, whiteboard structure and layout, mind-map work, schematic screenshots, goals, courses, and lessons |

@@ -2,7 +2,7 @@
   "name": "heptabase",
   "displayName": "Heptabase",
   "version": "1.6.0",
-  "description": "Use the Heptabase CLI for notes, journals, tags, files, complete whiteboard layout, mind maps, screenshots, goals, courses, and lessons.",
+  "description": "Use the Heptabase CLI for notes, journals, tags, files, whiteboard structure and layout, mind maps, screenshots, goals, courses, and lessons.",
   "author": {
     "name": "Heptabase"
   },

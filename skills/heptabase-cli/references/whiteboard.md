@@ -1,6 +1,6 @@
 # Whiteboard work
 
-Use this reference for complete whiteboard reads, layout changes, and visual checks. Copy IDs and object types from current CLI output. Do not guess them.
+Use this reference for whiteboard structure reads, layout changes, and visual checks. Copy IDs and object types from current CLI output. Do not guess them.
 
 ## Read before writing
 
