@@ -29,6 +29,8 @@ The user's stated invocation choice always wins; you can suggest or ask but not 
 | The agent may load it when relevant | Omit `disable-model-invocation`, or set it to `false` | Omit `policy.allow_implicit_invocation`, or set it to `true` |
 | Only the user may start it | Set `disable-model-invocation: true` | Set `policy.allow_implicit_invocation: false` |
 
+Because Codex allows implicit invocation by default, a human-invocation-only skill must include both settings and the complete UI metadata described below. An implicitly invocable skill may omit `agents/openai.yaml` unless it needs Codex UI metadata or dependencies.
+
 When the user has not chosen:
 
 - Prefer model invocation for repository conventions, reference knowledge, and guidance that should apply whenever relevant.
@@ -36,23 +38,32 @@ When the user has not chosen:
 - Do not infer explicit-only invocation only because a workflow uses tools, requires approval, or can cause side effects. Authorization is still checked when the action occurs.
 - If the correct invocation behavior is not easy to judge from the skill's purpose, ask the user before finalizing the skill.
 
-## Add Codex UI metadata
+## Add Codex metadata by invocation mode
 
-Every new skill must include `agents/openai.yaml`.
+For a skill that the model may invoke automatically, `agents/openai.yaml` is optional. Add or update it only when it serves a Codex-specific purpose:
 
-When changing an existing skill that lacks `agents/openai.yaml`, add the file as part of the change unless the user explicitly limits the task to a content-only edit.
+- Improve a user-facing skill's name, description, default prompt, icon, or branding in Codex.
+- Declare tool dependencies for Codex.
+- Follow the user's request for Codex metadata.
 
-Include these interface fields:
+Do not add the file only because a skill is new or being edited. Keep portable discovery in the `SKILL.md` name and description.
+
+For a human-invocation-only skill, `agents/openai.yaml` and these fields are required:
 
 - `interface.display_name`
 - `interface.short_description`
 - `interface.default_prompt`
+- `policy.allow_implicit_invocation: false`
 
-The default prompt must mention the skill as `$skill-name`.
+The skill selector is the primary entry point for a human-invocation-only skill, so its name, description, and starter prompt must be clear there.
 
-Include `policy.allow_implicit_invocation` when needed to keep Codex behavior aligned with `disable-model-invocation`.
+When adding or editing the file:
 
-Preserve unrelated existing interface, policy, and dependency fields.
+- Quote string values.
+- For implicitly invocable skills, keep interface fields optional.
+- When present or required, `interface.short_description` must contain 25 to 64 characters, and `interface.default_prompt` must mention `$skill-name`.
+- Include `policy.allow_implicit_invocation` when needed to keep Codex behavior aligned with `disable-model-invocation`.
+- Preserve unrelated interface, policy, and dependency fields.
 
 Run the repository checker after creating or changing a skill:
 
@@ -87,10 +98,12 @@ For a full repository audit:
 node .claude/skills/maintain-skills/scripts/check-skills.mjs
 ```
 
-To require complete UI metadata for every existing skill:
+Standard checks require complete Codex UI metadata only for human-invocation-only skills.
+
+For an optional audit that requires complete Codex UI metadata for every existing skill:
 
 ```bash
-node .claude/skills/maintain-skills/scripts/check-skills.mjs --strict
+node .claude/skills/maintain-skills/scripts/check-skills.mjs --strict-ui
 ```
 
 When a task changes skills in more than one repository, run the checker separately in each affected repository.

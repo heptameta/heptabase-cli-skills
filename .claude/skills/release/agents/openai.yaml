@@ -1,2 +1,7 @@
+interface:
+  display_name: "Release CLI Skills"
+  short_description: "Version and publish the Heptabase CLI skills plugin"
+  default_prompt: "Use $release to check release readiness and prepare the next Heptabase CLI skills release."
+
 policy:
   allow_implicit_invocation: false

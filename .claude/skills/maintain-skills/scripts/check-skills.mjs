@@ -12,12 +12,13 @@ const canonicalSkillsRootPath = path.resolve(
   ".claude/skills",
 );
 const commandArguments = process.argv.slice(2);
-const supportedCommandArguments = new Set(["--changed", "--strict"]);
+const supportedCommandArguments = new Set(["--changed", "--strict-ui"]);
 const unsupportedCommandArguments = commandArguments.filter(
   (argument) => !supportedCommandArguments.has(argument),
 );
 const shouldCheckChangedSkillsOnly = commandArguments.includes("--changed");
-const shouldRequireMetadataForAllSkills = commandArguments.includes("--strict");
+const shouldRequireUiMetadataForAllSkills =
+  commandArguments.includes("--strict-ui");
 const errorMessages = [];
 const warningMessages = [];
 
@@ -299,7 +300,7 @@ function collectSkillRecords() {
     });
 }
 
-function checkOpenAiMetadata({ isMetadataRequired, skillRecord }) {
+function checkOpenAiMetadata({ isUiMetadataRequired, skillRecord }) {
   const openAiMetadataFilePath = path.resolve(
     skillRecord.skillDirectoryPath,
     "agents/openai.yaml",
@@ -309,12 +310,13 @@ function checkOpenAiMetadata({ isMetadataRequired, skillRecord }) {
   );
 
   if (!fs.existsSync(openAiMetadataFilePath)) {
-    const message = `${relativeMetadataFilePath}: missing Codex UI metadata`;
-    (isMetadataRequired ? errorMessages : warningMessages).push(message);
-
     if (skillRecord.shouldDisableModelInvocation === true) {
       errorMessages.push(
-        `${toRepositoryRelativePath(skillRecord.skillFilePath)}: explicit-only Claude/Cursor behavior is not aligned with Codex`,
+        `${relativeMetadataFilePath}: human-invocation-only skills require Codex UI metadata and policy`,
+      );
+    } else if (isUiMetadataRequired) {
+      errorMessages.push(
+        `${relativeMetadataFilePath}: missing Codex UI metadata`,
       );
     }
     return;
@@ -347,8 +349,11 @@ function checkOpenAiMetadata({ isMetadataRequired, skillRecord }) {
       return;
     }
 
-    const message = `${relativeMetadataFilePath}: ${fieldName} is required`;
-    (isMetadataRequired ? errorMessages : warningMessages).push(message);
+    if (isUiMetadataRequired) {
+      errorMessages.push(
+        `${relativeMetadataFilePath}: ${fieldName} is required`,
+      );
+    }
   });
 
   if (
@@ -468,8 +473,8 @@ function main() {
     return;
   }
 
-  if (shouldCheckChangedSkillsOnly && shouldRequireMetadataForAllSkills) {
-    console.error("Use either --changed or --strict, not both.");
+  if (shouldCheckChangedSkillsOnly && shouldRequireUiMetadataForAllSkills) {
+    console.error("Use either --changed or --strict-ui, not both.");
     process.exitCode = 2;
     return;
   }
@@ -482,9 +487,9 @@ function main() {
     ? listChangedFilePaths()
     : [];
 
-  // Metadata scope depends on the mode: --changed requires complete metadata only
-  // for changed skills, the default warns when metadata is missing, and --strict
-  // requires complete metadata for every skill.
+  // Normal checks require complete UI metadata for human-invocation-only skills
+  // and validate any metadata that is present. --strict-ui extends the complete
+  // UI metadata requirement to every skill.
   skillRecords.forEach((skillRecord) => {
     const isChangedSkill = changedFilePaths.some(
       (changedFilePath) =>
@@ -494,12 +499,15 @@ function main() {
         ),
     );
     const shouldCheckMetadata = !shouldCheckChangedSkillsOnly || isChangedSkill;
-    const isMetadataRequired =
-      shouldRequireMetadataForAllSkills ||
-      (shouldCheckChangedSkillsOnly && isChangedSkill);
+    const isUiMetadataRequired =
+      shouldRequireUiMetadataForAllSkills ||
+      skillRecord.shouldDisableModelInvocation === true;
 
     if (shouldCheckMetadata) {
-      checkOpenAiMetadata({ isMetadataRequired, skillRecord });
+      checkOpenAiMetadata({
+        isUiMetadataRequired,
+        skillRecord,
+      });
     }
   });
 
