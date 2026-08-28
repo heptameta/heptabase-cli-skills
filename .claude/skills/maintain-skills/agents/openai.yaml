@@ -1,0 +1,7 @@
+interface:
+  display_name: "Maintain Skills"
+  short_description: "Keep repository skills consistent across coding agents"
+  default_prompt: "Use $maintain-skills to create, update, or audit a repository skill."
+
+policy:
+  allow_implicit_invocation: true
