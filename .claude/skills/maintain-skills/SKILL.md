@@ -2,6 +2,8 @@
 name: maintain-skills
 description: Maintain Agent Skills in a Heptabase repository across Claude Code, Codex, and Cursor. Use when creating, editing, moving, removing, or auditing files under .claude/skills/.
 disable-model-invocation: false
+metadata:
+  internal: true
 ---
 
 # Maintain Skills

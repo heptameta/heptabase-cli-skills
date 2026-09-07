@@ -3,6 +3,8 @@ name: release
 description: Release a new version of heptabase-cli-skills, the public Agent Skills plugin package for the Heptabase CLI. Use whenever asked to release, publish, ship, tag, or bump the version of this skills package/plugin, to check whether it is release-ready, or to create its GitHub release. Covers version bumping across plugin manifests, preflight validation, tagging, and publishing the GitHub release. Not for releasing the Heptabase desktop app or the heptabase CLI binary itself — those are versioned separately.
 allowed-tools: Bash(node *) Bash(npx --yes skills-ref *) Bash(git status *) Bash(git log *) Bash(git tag -l *) Bash(git describe *) Bash(git rev-parse *) Bash(gh release list *) Bash(gh release view *) Bash(gh pr list *)
 disable-model-invocation: true
+metadata:
+  internal: true
 ---
 
 # Releasing heptabase-cli-skills
