@@ -2,6 +2,8 @@
 name: public-repo-guard
 description: This repo (heptabase-cli-skills) is PUBLIC — everything committed is visible to the world and permanent in git history. Use before EVERY commit, push, PR, or release here, and whenever adding or editing docs, skills, scripts, or examples in this repo. Scans staged changes for sensitive or internal data — credentials, tokens, private keys, emails, personal home paths, internal workspace URLs (Notion, Slack, Discord, Linear), real card/workspace UUIDs, IP addresses, secret-bearing filenames — and explains how to judge and fix findings. Also use when asked to review any content in this repo for public sharing.
 allowed-tools: Bash(node *) Bash(git diff *) Bash(git status *) Bash(git ls-files *)
+metadata:
+  internal: true
 ---
 
 # Public-repo guard
