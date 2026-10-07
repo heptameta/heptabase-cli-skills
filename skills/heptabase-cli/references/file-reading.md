@@ -2,6 +2,8 @@
 
 Use `heptabase file list` to resolve a PDF/media card ID into exportable file IDs. Use `heptabase file export` to copy a local raw file into a scratch directory so native file-reading tools can inspect it.
 
+To add a local image to Heptabase instead, read `references/image-import.md`.
+
 ## Command Summary
 
 ```bash
