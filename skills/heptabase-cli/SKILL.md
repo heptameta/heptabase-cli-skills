@@ -1,15 +1,15 @@
 ---
 name: heptabase-cli
-description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, tags, and properties; read chats, messages, and files; import local images into notes; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
+description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, tags, and properties; read chats, messages, and files; import local files and URLs, make PDF, image, audio, and video cards from them, and add images to notes; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
-  heptabase-cli-version-range: "0.8.x"
+  heptabase-cli-version-range: "0.9.x"
 ---
 
 ## Prerequisites
 
 - CLI installed from the desktop app. The command is `heptabase` on macOS/Linux; Windows installs `heptabase.cmd` for cmd/PowerShell and a `heptabase` shim for POSIX shells.
-- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.8.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
+- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.9.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
 
 ## Command discovery
 
@@ -36,7 +36,8 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **Read parsed PDF content:** first read `references/pdf-reading.md`, then use `heptabase pdf metadata <pdfCardId>` to discover `totalPages`, and read a page range with `heptabase pdf read <pdfCardId> --start-page N --end-page N`.
 - **Read transcript content:** first read `references/transcript-reading.md`, then use `heptabase audio metadata <audioCardId>` or `heptabase video metadata <videoCardId>` to discover `transcriptStatus` and `durationSeconds`, and read overlapping transcript entries in a time range with `heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300` or `heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300`.
 - **Read an attached file:** first read `references/file-reading.md`. If needed, find its ID with `heptabase file list --card-id <cardId>`, then run `mktemp -d` and `heptabase file export <fileId> --output-dir <scratchDir>`. Read the returned `path` with your native file-reading tool.
-- **Add a local image to a note:** first read `references/image-import.md`, then run `heptabase file import <path>` and add an `image` node through `note read` and `note save`: set `fileId`, and set `originalWidth` and `originalHeight` to the returned `width` and `height`.
+- **Import a file or make a card from it:** first read `references/file-import.md`, then run `heptabase file import <path>` or `heptabase file import --url <url>`, and make a card with the `create` command for the returned `fileKind`, for example `heptabase pdf create --file-id <fileId>`.
+- **Add a local image to a note:** first read `references/file-import.md`, then run `heptabase file import <path>` and add an `image` node through `note read` and `note save`: set `fileId`, and set `originalWidth` and `originalHeight` to the returned `width` and `height`.
 - **Inspect a whiteboard:** `heptabase whiteboard read <whiteboardId> --mode structure`, then `heptabase whiteboard read-layout <whiteboardId>`.
 - **Read chat messages:** Copy a chat ID from `whiteboard read` output, then use `heptabase object read chat <chatId> --offset <n> --limit <n>` to paginate non-removed messages with their displayed author, timestamp, quoted content, and message content. For a whiteboard chat-messages element, use `heptabase object read chatMessagesElement <elementId> --offset <n> --limit <n>`.
 - **Check or view whiteboard layout:** run `heptabase whiteboard lint <whiteboardId>`. For visual review, first read `references/whiteboard.md`, then use `heptabase whiteboard screenshot <whiteboardId> --output <existingDirectory>/whiteboard.png` and inspect the returned local path.
@@ -70,9 +71,9 @@ Before setting a property value, you MUST read `references/property-values.md` a
 
 Before reading/listing files or exporting a file, you MUST read `references/file-reading.md`.
 
-## Image import
+## File import
 
-Before importing an image or adding it to a note, you MUST read `references/image-import.md`.
+Before importing a file, making a PDF, image, audio, or video card, or adding an image to a note, you MUST read `references/file-import.md`.
 
 ## PDF reading
 
@@ -114,7 +115,7 @@ Every command prints JSON to stdout. You can parse it with `jq` or pipe it to ot
 
 - **Auto-enabling local server/CLI install not supported.** If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
 - **File export is local-file-only.** `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
-- **Only image import is supported.** `heptabase file import` imports images (not HEIC, HEIF, or TIFF) for use in notes. It cannot import PDFs, audio, video, or other files, it does not create cards, and it cannot call media-processing APIs.
+- **Cards from files are not processed.** `pdf create`, `audio create`, and `video create` with `--file-id` do not parse the PDF or transcribe the audio or video; ask the user to do that in the app. HEIC, HEIF, and TIFF photos import as `fileKind: "file"` and cannot become image cards; convert them to JPEG or PNG first.
 - **Whiteboard scope is intentionally bounded.** The CLI cannot delete a whiteboard or underlying Card, move content across spaces, create arbitrary shapes, or perform one semantic whole-board auto-layout command. `remove-objects` removes canvas placements, not source Cards.
 - **No CLI undo command or Agent history.** Whiteboard mutations use the app's normal domain actions, but the CLI does not expose Agent chat undo, tool-call persistence, or the Agent screenshot checklist. Read first and verify the result yourself.
 - **Whiteboard content is local.** Whiteboard reads use content available in the running desktop app and do not run backend-only PDF, web, or YouTube enrichment. Use dedicated PDF and media commands for full source content. Full web card content is not available through the CLI; use the source URL in the whiteboard output.
