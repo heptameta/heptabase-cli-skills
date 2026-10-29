@@ -3,13 +3,13 @@ name: heptabase-cli
 description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, tags, and properties; read chats, messages, and files; import local files and URLs, make PDF, image, audio, and video cards from them, and add images to notes; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
-  heptabase-cli-version-range: "0.17.x"
+  heptabase-cli-version-range: "0.9.x"
 ---
 
 ## Prerequisites
 
 - CLI installed from the desktop app. The command is `heptabase` on macOS/Linux; Windows installs `heptabase.cmd` for cmd/PowerShell and a `heptabase` shim for POSIX shells.
-- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.17.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
+- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.9.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
 
 ## Command discovery
 
