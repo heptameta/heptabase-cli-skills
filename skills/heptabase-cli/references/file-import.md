@@ -60,7 +60,7 @@ A failed import prints `status: "failed"` and exits with status `1`:
 | `fileUnreadable` | An image or video (`fileKind`) whose size could not be read | The file is damaged or in a format the app cannot show. Convert it, then import the converted file |
 | `fileIdConflict` | The `--file-id` belongs to a different file | Import again without `--file-id` |
 | `invalidUrl` | `--url` is not an http or https URL | Fix the URL |
-| `downloadFailed` | The server refused the download (`httpStatus`), or could not be reached (`httpStatus: null`) | 401 or 403: the file needs a login; download it yourself and import the path. 404: check the URL |
+| `downloadFailed` | The server refused the download or sent an empty file (`httpStatus`), or could not be reached (`httpStatus: null`) | 401 or 403: the file needs a login; download it yourself and import the path. 404 or an empty file: check the URL |
 | `fileTooLarge` | The download is over 2000 MB | |
 
 ## Make A Card
