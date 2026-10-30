@@ -35,8 +35,8 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **Work with properties:** use `heptabase tag cards <tagId> --include-properties` to list tagged cards with values, or `heptabase card properties <cardIdOrDate>` to inspect one card. Before writing, read `references/property-values.md`, inspect definitions with `heptabase tag properties <tagId>`, then use `heptabase card set-property <cardIdOrDate> --property-id <propertyId> --value "Published"` for strings/options or `--json-value ...` for typed JSON values.
 - **Read parsed PDF content:** first read `references/pdf-reading.md`, then use `heptabase pdf metadata <pdfCardId>` to discover `totalPages`, and read a page range with `heptabase pdf read <pdfCardId> --start-page N --end-page N`.
 - **Read transcript content:** first read `references/transcript-reading.md`, then use `heptabase audio metadata <audioCardId>` or `heptabase video metadata <videoCardId>` to discover `transcriptStatus` and `durationSeconds`, and read overlapping transcript entries in a time range with `heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300` or `heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300`.
-- **Read an attached file:** first read `references/file-reading.md`. If needed, find its ID with `heptabase file list --card-id <cardId>`, then run `mktemp -d` and `heptabase file export <fileId> --output-dir <scratchDir>`. Read the returned `path` with your native file-reading tool.
-- **Import a file or make a card from it:** first read `references/file-import.md`, then run `heptabase file import <path>` or `heptabase file import --url <url>`, and make a card with the `create` command for the returned `fileKind`, for example `heptabase pdf create --file-id <fileId>`.
+- **Read an attached file:** first read `references/file-reading.md`. If needed, find its `fileUri` with `heptabase file list --card-id <cardId>`, then run `mktemp -d` and `heptabase file export "<fileUri>" --output-dir <scratchDir>`. Read the returned `path` with your native file-reading tool.
+- **Import a file or make a card from it:** first read `references/file-import.md`, then run `heptabase file import <path>` or `heptabase file import --url <url>`, and make a card with the `create` command for the returned `fileKind`, for example `heptabase pdf create --file-uri "<fileUri>"`.
 - **Add a local image to a note:** first read `references/file-import.md`, then run `heptabase file import <path>` and add an `image` node through `note read` and `note save`: set `fileId`, and set `originalWidth` and `originalHeight` to the returned `width` and `height`.
 - **Inspect a whiteboard:** `heptabase whiteboard read <whiteboardId> --mode structure`, then `heptabase whiteboard read-layout <whiteboardId>`.
 - **Read chat messages:** Copy a chat ID from `whiteboard read` output, then use `heptabase object read chat <chatId> --offset <n> --limit <n>` to paginate non-removed messages with their displayed author, timestamp, quoted content, and message content. For a whiteboard chat-messages element, use `heptabase object read chatMessagesElement <elementId> --offset <n> --limit <n>`.
@@ -57,7 +57,9 @@ The `<workspaceId>` segment in the URL is not needed by the CLI — extract only
 
 ## Note and journal card content editing
 
-Use `create` / `append` with Markdown for ordinary writing. Before calling `heptabase note save` / `heptabase journal save` with ProseMirror JSON, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
+Use `note create/append` and `journal create/append` with standard Markdown for ordinary writing. They do not accept the Hepta Markdown media lines returned by `object read` or `pdf read`, such as file URI images, layout attributes, and the `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` tags. For images in notes, use the `note read` → `note save` JSON workflow in `references/file-import.md`; stored image nodes use `fileId`.
+
+`note save` and `journal save` accept ProseMirror JSON. Before calling either, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
 
 ## Created by AI marking
 
@@ -69,7 +71,7 @@ Before setting a property value, you MUST read `references/property-values.md` a
 
 ## File reading
 
-Before reading/listing files or exporting a file, you MUST read `references/file-reading.md`.
+Before reading/listing files, exporting a file, or interpreting file URIs and media lines from `object read`, you MUST read `references/file-reading.md`.
 
 ## File import
 
@@ -114,8 +116,8 @@ Every command prints JSON to stdout. You can parse it with `jq` or pipe it to ot
 ## Known limitations
 
 - **Auto-enabling local server/CLI install not supported.** If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
-- **File export is local-file-only.** `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
-- **Cards from files are not processed.** `pdf create`, `audio create`, and `video create` with `--file-id` do not parse the PDF or transcribe the audio or video; ask the user to do that in the app. HEIC, HEIF, and TIFF photos import as `fileKind: "file"` and cannot become image cards; convert them to JPEG or PNG first.
+- **File export normally uses local files.** Exporting a regular file requires its metadata and raw file in the desktop app. A parsed PDF image is the exception: pass its full `heptabase://pdfCard/<pdfCardId>/file/<fileId>` URI from `pdf read` to download and export it. A bare ID cannot locate a parsed image that is absent locally.
+- **Cards from files are not processed.** `pdf create`, `audio create`, and `video create` with `--file-uri` do not parse the PDF or transcribe the audio or video; ask the user to do that in the app. HEIC, HEIF, and TIFF photos import as `fileKind: "file"` and cannot become image cards; convert them to JPEG or PNG first.
 - **Whiteboard scope is intentionally bounded.** The CLI cannot delete a whiteboard or underlying Card, move content across spaces, create arbitrary shapes, or perform one semantic whole-board auto-layout command. `remove-objects` removes canvas placements, not source Cards.
 - **No CLI undo command or Agent history.** Whiteboard mutations use the app's normal domain actions, but the CLI does not expose Agent chat undo, tool-call persistence, or the Agent screenshot checklist. Read first and verify the result yourself.
 - **Whiteboard content is local.** Whiteboard reads use content available in the running desktop app and do not run backend-only PDF, web, or YouTube enrichment. Use dedicated PDF and media commands for full source content. Full web card content is not available through the CLI; use the source URL in the whiteboard output.

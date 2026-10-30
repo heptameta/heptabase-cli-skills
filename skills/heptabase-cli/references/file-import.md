@@ -32,6 +32,7 @@ Example response:
 {
   "status": "succeeded",
   "fileId": "33333333-3333-4333-8333-333333333333",
+  "fileUri": "heptabase://file/33333333-3333-4333-8333-333333333333",
   "filename": "diagram.png",
   "fileKind": "image",
   "width": 1280,
@@ -39,15 +40,15 @@ Example response:
 }
 ```
 
-`fileKind` says what Heptabase can make from the file. `width` and `height` are set only for images and videos.
+`fileKind` says what Heptabase can make from the file. `width` and `height` are set only for images and videos. Pass `fileUri` to the card commands and to `file export`; an image node in a note uses `fileId`.
 
 <!-- prettier-ignore -->
 | `fileKind` | Make a card | Also |
 |---|---|---|
-| `pdf` | `heptabase pdf create --file-id <fileId>` | |
-| `image` | `heptabase image create --file-id <fileId>` | Add it to a note (see [Add An Image To A Note](#add-an-image-to-a-note)) |
-| `audio` | `heptabase audio create --file-id <fileId>` | |
-| `video` | `heptabase video create --file-id <fileId>` | |
+| `pdf` | `heptabase pdf create --file-uri "<fileUri>"` | |
+| `image` | `heptabase image create --file-uri "<fileUri>"` | Add it to a note (see [Add An Image To A Note](#add-an-image-to-a-note)) |
+| `audio` | `heptabase audio create --file-uri "<fileUri>"` | |
+| `video` | `heptabase video create --file-uri "<fileUri>"` | |
 | `file` | No card for this type | HEIC, HEIF and TIFF photos are `file`: convert them to JPEG or PNG and import that |
 
 `file import` does not create a card or change any note. It only adds the file to Heptabase.
@@ -66,8 +67,8 @@ A failed import prints `status: "failed"` and exits with status `1`:
 ## Make A Card
 
 ```bash
-heptabase pdf create --file-id <fileId>
-heptabase image create --file-id <fileId> --title "Architecture diagram"
+heptabase pdf create --file-uri "<fileUri>"
+heptabase image create --file-uri "<fileUri>" --title "Architecture diagram"
 ```
 
 Example response:
@@ -80,17 +81,18 @@ Example response:
 }
 ```
 
+- Use the `fileUri` from `file import`, or a PDF or media card's file from `file list`. An image from `pdf read` usually has no local file yet: export it with `file export`, import the exported file, and use the new `fileUri`.
 - The title defaults to the file name without its extension. Pass `--title` to set it.
 - `status` is `created`, `alreadyExists` (the file already has a card of this kind, which is returned instead of a new one) or `restoredFromTrash` (that card was in the trash and is back). Running the same command again never makes a duplicate.
 - A PDF card's pages can be read with `pdf read` only after the PDF is parsed (see `references/pdf-reading.md`). Audio and video cards from files are not transcribed.
-- `video create` also takes `--url <youtubeUrl>` instead of `--file-id`, to save a YouTube video. The title then defaults to the video title, and its captions become the card's transcript in the background.
+- `video create` also takes `--url <youtubeUrl>` instead of `--file-uri`, to save a YouTube video. The title then defaults to the video title, and its captions become the card's transcript in the background.
 
 A failed card prints `status: "failed"` and exits with status `1`:
 
 <!-- prettier-ignore -->
 | `failureReasonCode` | Meaning | What to do |
 |---|---|---|
-| `fileNotFound` | No file with this ID in your own workspace | Use the `fileId` from `file import` |
+| `fileNotFound` | No file with this ID in your own workspace | Use the `fileUri` from `file import` |
 | `fileKindMismatch` | The file is another kind (`fileKind`) | Use the command for that kind |
 | `cardCreationNotAllowed` | The app's plan or space does not allow a new card | Tell the user |
 | `invalidUrl` or `unsupportedVideoUrl` | `video create --url` got a URL that is not a YouTube video | Download the video and import it, or check the URL |
@@ -111,7 +113,7 @@ heptabase note read <cardId>
 { "type": "image", "attrs": { "fileId": "33333333-3333-4333-8333-333333333333", "originalWidth": 1280, "originalHeight": 720 } }
 ```
 
-Keep every existing node. Insert the image where it belongs, for example after the paragraph that refers to it.
+Keep every existing node. Insert the image where it belongs, for example after the paragraph that refers to it. Do not put `fileUri` in the node: stored nodes use `fileId`. CLI `note create/append` and `journal create/append` still take standard Markdown and cannot turn `![alt](heptabase://…)` into a stored file.
 
 3. Write the full document to a file, then save it with the `contentMd5` from step 1:
 
