@@ -57,7 +57,7 @@ The `<workspaceId>` segment in the URL is not needed by the CLI — extract only
 
 ## Note and journal card content editing
 
-Use `note create/append` and `journal create/append` with standard Markdown for ordinary writing. They do not accept the Hepta Markdown media lines returned by `object read` or `pdf read`, such as file URI images, layout attributes, and the `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` tags. For images in notes, use the `note read` → `note save` JSON workflow in `references/file-import.md`; stored image nodes use `fileId`.
+Use `note create/append` and `journal create/append` with standard Markdown for ordinary writing. They do not accept the Hepta Markdown media lines returned by `object read`, such as file URI images, layout attributes, and the `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` tags. For images in notes, use the `note read` → `note save` JSON workflow in `references/file-import.md`; stored image nodes use `fileId`.
 
 `note save` and `journal save` accept ProseMirror JSON. Before calling either, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
 
@@ -116,7 +116,7 @@ Every command prints JSON to stdout. You can parse it with `jq` or pipe it to ot
 ## Known limitations
 
 - **Auto-enabling local server/CLI install not supported.** If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
-- **File export normally uses local files.** Exporting a regular file requires its metadata and raw file in the desktop app. A parsed PDF image is the exception: pass its full `heptabase://pdfCard/<pdfCardId>/file/<fileId>` URI from `pdf read` to download and export it. A bare ID cannot locate a parsed image that is absent locally.
+- **File export is local-file-only.** `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
 - **Cards from files are not processed.** `pdf create`, `audio create`, and `video create` with `--file-uri` do not parse the PDF or transcribe the audio or video; ask the user to do that in the app. HEIC, HEIF, and TIFF photos import as `fileKind: "file"` and cannot become image cards; convert them to JPEG or PNG first.
 - **Whiteboard scope is intentionally bounded.** The CLI cannot delete a whiteboard or underlying Card, move content across spaces, create arbitrary shapes, or perform one semantic whole-board auto-layout command. `remove-objects` removes canvas placements, not source Cards.
 - **No CLI undo command or Agent history.** Whiteboard mutations use the app's normal domain actions, but the CLI does not expose Agent chat undo, tool-call persistence, or the Agent screenshot checklist. Read first and verify the result yourself.

@@ -81,7 +81,7 @@ Example response:
 }
 ```
 
-- Use the `fileUri` from `file import`, or a PDF or media card's file from `file list`. An image from `pdf read` usually has no local file yet: export it with `file export`, import the exported file, and use the new `fileUri`.
+- Use the `fileUri` from `file import`, or a PDF or media card's file from `file list`.
 - The title defaults to the file name without its extension. Pass `--title` to set it.
 - `status` is `created`, `alreadyExists` (the file already has a card of this kind, which is returned instead of a new one) or `restoredFromTrash` (that card was in the trash and is back). Running the same command again never makes a duplicate.
 - A PDF card's pages can be read with `pdf read` only after the PDF is parsed (see `references/pdf-reading.md`). Audio and video cards from files are not transcribed.
