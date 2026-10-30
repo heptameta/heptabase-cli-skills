@@ -1,6 +1,6 @@
 # File Reading
 
-Use `heptabase file list` to resolve a PDF/media card ID into exportable file IDs. Use `heptabase file export` to copy a local raw file into a scratch directory so native file-reading tools can inspect it.
+Use `heptabase file list` to find file URIs for a PDF/media card. Use `heptabase file export` with a file URI or file ID to copy a file into a scratch directory so native file-reading tools can inspect it.
 
 To add a local file or a URL to Heptabase instead, read `references/file-import.md`.
 
@@ -8,12 +8,41 @@ To add a local file or a URL to Heptabase instead, read `references/file-import.
 
 ```bash
 heptabase file list --card-id <pdf-or-media-card-id>
+heptabase file export "<fileUri>" --output-dir <existing-directory>
 heptabase file export <fileId> --output-dir <existing-directory>
 ```
 
 - `file list --card-id` returns exportable files for PDF/media cards. Unsupported card types return an empty `files` array.
-- `file export` copies a local raw file into `--output-dir` and returns the file path to read.
+- `file export` copies a local raw file into `--output-dir` and returns the file path to read. It does not download files from cloud storage.
 - Read only the returned `path`; never inspect Heptabase internal file paths.
+
+## File URIs And Media Lines
+
+A file URI identifies a Heptabase file. It is not an HTTP download URL or a local path:
+
+```text
+heptabase://<objectType>/<objectId>/file/<fileId>
+heptabase://file/<fileId>
+```
+
+The first form includes the object where the file was read. The second has no source, for example a newly imported file. Copy the URI returned by `object read`, `file list`, or `file import`; preserve its object type and source ID. A journal source uses a `YYYY-MM-DD` date. Media card sources use `imageCard`, `videoCard`, or `audioCard`; a PDF source uses `pdfCard`.
+
+`object read` presents media in Hepta Markdown. For example (IDs below are placeholders):
+
+```markdown
+![Diagram](heptabase://card/<cardId>/file/<fileId>){width=60% alignment=left}
+![](https://example.com/diagram.png)
+<hepta-video src="heptabase://card/<cardId>/file/<fileId>" width="80%"></hepta-video>
+<hepta-audio src="heptabase://card/<cardId>/file/<fileId>"></hepta-audio>
+<hepta-file src="heptabase://card/<cardId>/file/<fileId>"></hepta-file>
+<hepta-embed type="card" id="<cardId>" width="60%" alignment="right">Related note</hepta-embed>
+```
+
+Each media block occupies its own line. Images, videos, and embeds can show `width` and `alignment`; audio and file blocks do not. Width is a percentage from 20% to 100%, rounded to 10% steps; alignment is `left`, `center`, or `right`. Default layout values are omitted.
+
+Each of `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` identifies its node type without a `type` attribute. `width` and `alignment` are invalid on `<hepta-audio>` and `<hepta-file>`. These tags are empty. Media card and PDF headings use `file: <fileUri>`.
+
+These are read formats. CLI `note create/append` and `journal create/append` still take standard Markdown, so do not paste these media lines into them. `note save` and `journal save` take ProseMirror JSON. To insert an image in a note, use the file's `fileId` in an image node as described in `references/file-import.md`.
 
 ## List Files
 
@@ -32,6 +61,7 @@ Example response:
   "files": [
     {
       "id": "55555555-5555-4555-8555-555555555555",
+      "fileUri": "heptabase://pdfCard/22222222-2222-4222-8222-222222222222/file/55555555-5555-4555-8555-555555555555",
       "purpose": "content",
       "name": "report.pdf",
       "mimeType": "application/pdf",
@@ -42,7 +72,7 @@ Example response:
 }
 ```
 
-Pick the file `id` whose `purpose` you need, then pass that `id` to `file export` as `<fileId>`.
+Pick the file whose `purpose` you need, then pass its `fileUri` to `file export`. A bare `id` also works for a regular local file.
 
 ## Export And Read
 
@@ -57,7 +87,7 @@ Copy the returned directory path for the next command.
 2. Export the file:
 
 ```bash
-heptabase file export 55555555-5555-4555-8555-555555555555 --output-dir <scratchDirFromMktemp>
+heptabase file export "heptabase://pdfCard/22222222-2222-4222-8222-222222222222/file/55555555-5555-4555-8555-555555555555" --output-dir <scratchDirFromMktemp>
 ```
 
 3. Parse the JSON response and read the returned `path` with your native file-reading tool.
@@ -92,5 +122,5 @@ Now read `/tmp/hepta-read/report-55555555-5555-4555-8555-555555555555.pdf` with 
 ## Troubleshooting
 
 - `file list --card-id` returns empty `files`: this card has no exportable local file. If the user expected a PDF/media file, ask them to verify the card.
-- `file export` says the file is unavailable locally: ask the user to open/sync the file in Heptabase, then retry.
+- `file export` says a file is unavailable locally: ask the user to open/sync the file in Heptabase, then retry.
 - Invalid or missing `--output-dir`: create a scratch directory with `mktemp -d` and retry.
