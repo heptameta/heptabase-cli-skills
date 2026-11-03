@@ -1,5 +1,11 @@
 # Transcript Reading
 
+## Where Transcripts Come From
+
+- **YouTube video cards** made with `heptabase video create --url <youtubeUrl>` get the video's captions as their transcript in the background. `transcriptStatus` is `"processing"` while the captions download. If the video has no captions, it goes back to `null`.
+- **Audio and video cards made from files** with `audio create` or `video create --file-uri` are not transcribed. `transcriptStatus` stays `null` until the user generates a transcript in Heptabase.
+- To make these cards, read `references/importing.md`.
+
 ## Common Usage Pattern
 
 1. Find audio and video card IDs:
@@ -39,4 +45,4 @@ heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300
 
 - `transcriptStatus: "processing"`: wait and retry later.
 - `transcriptStatus: "failed"`: parsed transcript content is not available for this media card.
-- `transcriptStatus: null`: this media card has not been transcribed yet. Ask the user to generate a transcript in Heptabase first.
+- `transcriptStatus: null`: this media card has not been transcribed yet, or its YouTube video has no captions. Ask the user to generate a transcript in Heptabase first.

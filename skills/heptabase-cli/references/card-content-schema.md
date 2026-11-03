@@ -4,7 +4,7 @@ This reference covers note and journal content writes through the Heptabase CLI.
 
 Read this before generating ProseMirror JSON: the card content schema is strict, and guessed structures can fail validation or damage card content.
 
-Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only when you need to preserve existing structure or create schema nodes/marks that Markdown cannot express.
+Use standard Markdown with `note create`, `note append`, `journal create`, and `journal append` for ordinary writing and appending. `note save` and `journal save` take ProseMirror JSON. Use ProseMirror JSON only when you need to preserve existing structure or create schema nodes/marks that Markdown cannot express.
 
 ## Top-Level JSON Shape
 
@@ -31,7 +31,9 @@ When editing existing content, preserve existing `id` values from `read`. For ne
 
 ## Markdown Content
 
-For everyday note content, you can use Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
+The `create` and `append` commands take the standard Markdown below, not the Hepta Markdown that `object read` returns. File URI image lines, `{width=… alignment=…}` layout attributes, and the `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` tags are not supported input (see `references/file-reading.md` for that read format). To insert an imported image, follow `references/importing.md` and save an `image` node whose `attrs.fileId` is the imported `fileId`. Never put a file URI in `attrs.src`, `attrs.url`, or `attrs.fileId`.
+
+The table below maps standard Markdown syntax to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
 | Markdown | ProseMirror result |
@@ -429,5 +431,6 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 - Don't use `people` inline mentions through the CLI schema.
 - Don't add `highlight` or `anchor` marks when creating new content.
 - Don't set deprecated attrs on new content; preserve them only when editing existing JSON from `read`.
+- Don't copy media lines or file URIs from `object read` into Markdown or node attrs; media nodes take the bare `fileId`.
 - Don't assume `embed` and block `mention` can target every card type; use only `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`.
 - Don't edit Heptabase local database files directly to bypass the CLI.
