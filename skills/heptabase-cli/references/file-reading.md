@@ -49,7 +49,7 @@ Where you find them:
 - `src` is a file URI, or an `http` or `https` URL for external media such as an embedded YouTube video.
 - `pdf read` shows images in parsed pages as signed download URLs, not file URIs.
 
-These lines are a read format. `note create`, `note append`, `journal create`, and `journal append` take standard Markdown and do not accept them; `note save` and `journal save` take ProseMirror JSON, where media nodes use the bare `fileId`. To put an image in a note, follow `references/importing.md`.
+`note create`, `note append`, `journal create`, and `journal append` accept these lines as they are; see `references/card-content-schema.md` for the rules. `note save` and `journal save` take ProseMirror JSON, where media nodes use the bare `fileId`. To put an image in a note, follow `references/importing.md`.
 
 ## List Files
 

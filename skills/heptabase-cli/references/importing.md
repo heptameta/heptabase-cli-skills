@@ -1,6 +1,6 @@
 # Importing Files And URLs
 
-These commands bring outside content into Heptabase: files from your machine or from a URL, web pages, and YouTube videos. Each one makes a Heptabase file or a card. None of them changes an existing note; to show an image in a note, save the note yourself (see [Add An Image To A Note](#add-an-image-to-a-note)).
+These commands bring outside content into Heptabase: files from your machine or from a URL, web pages, and YouTube videos. Each one makes a Heptabase file or a card. None of them changes an existing note; to show an image in a note, write it into the note yourself (see [Add An Image To A Note](#add-an-image-to-a-note)).
 
 ## Choose The Command
 
@@ -11,7 +11,7 @@ These commands bring outside content into Heptabase: files from your machine or 
 | A URL that serves a file, such as a PDF, image, audio, or video link | `heptabase file import --url <url>`, then the card command for its `fileKind` | The same |
 | A YouTube video URL | `heptabase video create --url <url>` | A video card whose captions become its transcript in the background |
 | A web page URL, such as an article or documentation page | `heptabase web create --url <url>` | A web card whose page content is extracted in the background |
-| An image to show in a note | `heptabase file import <path>`, then `note read` and `note save` | An image node in the note |
+| An image to show in a note | `heptabase file import <path>`, then `note append` with an image line of the `fileUri` | An image node in the note |
 
 Use `file import --url` only when the URL serves the file itself, for example `https://arxiv.org/pdf/<arxivId>` or a link ending in `.pdf`. A web page imported with `file import --url` becomes a `fileKind: "file"` that no card can be made from, and the imported file stays in Heptabase unused. If that happens, use `web create` for the page and tell the user about the unused file.
 
@@ -145,7 +145,21 @@ heptabase video create --url <youtubeUrl> --title "Lecture 3"
 
 ## Add An Image To A Note
 
-Before saving ProseMirror JSON, read `references/card-content-schema.md`.
+1. Import the image with `heptabase file import <path>` and keep `fileUri`.
+
+2. Write the `fileUri` as a Hepta Markdown image line, on a line of its own. To add the image at the end of a note or journal, append it:
+
+```bash
+heptabase note append <cardId> --content '![Architecture diagram](heptabase://file/33333333-3333-4333-8333-333333333333)'
+```
+
+For a new note, put the same line in the `note create` content; first read `references/created-by-ai.md` to decide on `--no-created-by-ai`. To change the layout, add `{width=60% alignment=left}` right after the image; see `references/card-content-schema.md`.
+
+The desktop app fills in the image's `originalWidth` and `originalHeight` the first time it shows the image, which changes the note's `contentMd5`. Read the note again before a later `note save` or `note append --content-md5`.
+
+### Insert An Image In The Middle Of A Note
+
+`append` only adds to the end. To place the image elsewhere, save the note's ProseMirror JSON. Before saving, read `references/card-content-schema.md`.
 
 1. Import the image with `heptabase file import <path>` and keep `fileId`, `width`, and `height`.
 
@@ -171,9 +185,7 @@ heptabase note save <cardId> --content-md5 <contentMd5> --content-file <path>
 
 5. Read the note again to confirm the image node is there.
 
-Always set `originalWidth` and `originalHeight`. Without them, the desktop app writes them into the note the first time it shows the image. That changes the note's `contentMd5`, so a later save with the old hash fails with a conflict.
-
-`note create` and `note append` take standard Markdown and cannot turn an imported file into an image. Use the save workflow above even for a new note: first read `references/created-by-ai.md` to decide on `--no-created-by-ai`, run `heptabase note create --content "# Title"`, then follow the same steps with the returned card ID.
+Always set `originalWidth` and `originalHeight` in JSON. Without them, the desktop app writes them into the note the first time it shows the image. That changes the note's `contentMd5`, so a later save with the old hash fails with a conflict.
 
 If the save fails, read the note again for the latest `contentMd5`, then retry the save with the same `fileId`. Do not import the image again.
 

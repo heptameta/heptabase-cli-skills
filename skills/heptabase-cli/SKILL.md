@@ -41,7 +41,7 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **Read transcript content:** first read `references/transcript-reading.md`, then use `heptabase audio metadata <audioCardId>` or `heptabase video metadata <videoCardId>` to discover `transcriptStatus` and `durationSeconds`, and read overlapping transcript entries in a time range with `heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300` or `heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300`.
 - **Read an attached file:** first read `references/file-reading.md`. If needed, find its `fileUri` with `heptabase file list --card-id <cardId>`, then run `mktemp -d` and `heptabase file export "<fileUri>" --output-dir <scratchDir>`. Read the returned `path` with your native file-reading tool.
 - **Save a file, web page, or video to Heptabase:** first read `references/importing.md`. For a local file or a URL that serves a file, run `heptabase file import <path>` or `heptabase file import --url <url>`, then the `create` command for the returned `fileKind`, for example `heptabase pdf create --file-uri "<fileUri>"`. For a web page, run `heptabase web create --url <url>`; for a YouTube video, `heptabase video create --url <url>`.
-- **Add a local image to a note:** first read `references/importing.md`, then run `heptabase file import <path>` and add an `image` node through `note read` and `note save`: set `fileId`, and set `originalWidth` and `originalHeight` to the returned `width` and `height`.
+- **Add a local image to a note:** first read `references/importing.md`, then run `heptabase file import <path>` and append the returned `fileUri` as an image line: `heptabase note append <cardId> --content '![Diagram](<fileUri>)'`.
 - **Inspect a whiteboard:** `heptabase whiteboard read <whiteboardId> --mode structure`, then `heptabase whiteboard read-layout <whiteboardId>`.
 - **Read chat messages:** Copy a chat ID from `whiteboard read` output, then use `heptabase object read chat <chatId> --offset <n> --limit <n>` to paginate non-removed messages with their displayed author, timestamp, quoted content, and message content. For a whiteboard chat-messages element, use `heptabase object read chatMessagesElement <elementId> --offset <n> --limit <n>`.
 - **Check or view whiteboard layout:** run `heptabase whiteboard lint <whiteboardId>`. For visual review, first read `references/whiteboard.md`, then use `heptabase whiteboard screenshot <whiteboardId> --output <existingDirectory>/whiteboard.png` and inspect the returned local path.
@@ -61,9 +61,9 @@ The `<workspaceId>` segment in the URL is not needed by the CLI — extract only
 
 ## Note and journal card content editing
 
-Use `note create`, `note append`, `journal create`, and `journal append` with standard Markdown for ordinary writing. They do not accept the media lines that `object read` returns, such as file URI images, layout attributes, and the `<hepta-video>`, `<hepta-audio>`, and `<hepta-file>` tags. To put an image in a note, use the `note read` → `note save` workflow in `references/importing.md`; stored image nodes use `fileId`.
+`note create`, `note append`, `journal create`, and `journal append` take Hepta Markdown: ordinary Markdown plus Heptabase tags for mentions, embeds, media, and colors. It is the format `object read` returns, so content you read there can be written back once its line-number prefixes are stripped.
 
-`note save` and `journal save` take ProseMirror JSON. Before calling either, you MUST read `references/card-content-schema.md`. Also read it before generating Markdown that uses Heptabase-specific extensions such as card mentions, whiteboard mentions, dates, videos, math, or toggle/todo lists.
+`note save` and `journal save` take ProseMirror JSON. Before calling either, you MUST read `references/card-content-schema.md`. Also read it before writing Hepta Markdown beyond plain formatting, such as mentions, embeds, images, videos, math, tables, toggle/todo lists, or colors.
 
 ## Created by AI marking
 
