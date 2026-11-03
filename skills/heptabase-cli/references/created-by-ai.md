@@ -1,6 +1,6 @@
 # Created by AI Marking
 
-`note create` and `journal create` mark new content as **Created by AI** by default.
+`note create` and `journal create` mark new content as **Created by AI** by default. Other create commands always mark it; see [Always marked](#always-marked).
 
 For notes, Card Library’s Created by AI filter keeps them separate from human-owned cards.
 For journals, the same create-time mark is stored as `aiArtifactInfo`; later `append` / `save` cannot change it. Journals are not shown in the Card Library Created by AI filter.
@@ -26,6 +26,16 @@ Pass `--no-created-by-ai` when the user wants the note or journal as **theirs** 
 heptabase note create --no-created-by-ai --content "# My note\n\n..."
 heptabase journal create --no-created-by-ai --content "..."
 ```
+
+## Always marked
+
+These commands always mark what they create as Created by AI. They have no `--no-created-by-ai` flag:
+
+- `tag create`
+- `pdf create`, `image create`, `audio create`, and `video create` (with `--file-uri` or `--url`)
+- `web create`
+
+The mark goes only on a new card or tag. When the result `status` is `alreadyExists` or `restoredFromTrash`, the command returns an existing card and does not mark it. If the user wants the item as theirs, tell them before you run the command that it will be marked Created by AI.
 
 ## Timing
 

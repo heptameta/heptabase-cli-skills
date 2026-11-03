@@ -4,7 +4,7 @@ This reference covers note and journal content writes through the Heptabase CLI.
 
 Read this before generating ProseMirror JSON: the card content schema is strict, and guessed structures can fail validation or damage card content.
 
-Prefer Markdown for ordinary writing and appending. Use ProseMirror JSON only when you need to preserve existing structure or create schema nodes/marks that Markdown cannot express.
+Use Hepta Markdown with `note create`, `note append`, `journal create`, and `journal append` for ordinary writing and appending, including mentions, media, and colors. `note save` and `journal save` take ProseMirror JSON. Use ProseMirror JSON only when you need to preserve existing structure, insert content in the middle of a note, or create schema nodes/marks that Hepta Markdown cannot express.
 
 ## Top-Level JSON Shape
 
@@ -29,12 +29,14 @@ The document must contain at least one block. `{"type":"doc","content":[]}` is i
 
 When editing existing content, preserve existing `id` values from `read`. For new blocks, omit `id` or set it to `null`; the CLI save handler backfills valid IDs. Do not create custom string IDs yourself.
 
-## Markdown Content
+## Hepta Markdown Content
 
-For everyday note content, you can use Markdown instead of JSON. The table below maps Markdown syntax to the ProseMirror nodes and marks the CLI creates:
+The `create` and `append` commands take Hepta Markdown: ordinary Markdown plus the Heptabase tags below. It is the format `object read` returns, so content you read there can be written back. Strip the `<lineNumber>\t` prefix from every line first; the CLI writes it as text.
+
+The table below maps Hepta Markdown syntax to the ProseMirror nodes and marks the CLI creates:
 
 <!-- prettier-ignore -->
-| Markdown | ProseMirror result |
+| Hepta Markdown | ProseMirror result |
 | --- | --- |
 | `# H1` through `###### H6` | `heading` |
 | Plain text paragraphs | `paragraph` |
@@ -45,39 +47,56 @@ For everyday note content, you can use Markdown instead of JSON. The table below
 | `+ item` | `toggle_list_item` |
 | Triple backtick fences | `code_block` |
 | `---` | `horizontal_rule` |
-| Markdown tables | `table` |
-| `![](src)`, `![](src "title")` | `image` block (`alt` is ignored so no need to set it) |
-| `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, `{{bilibili URL}}` | `video` block |
-| `{{card UUID}}` | inline `card` mention |
-| `{{pdf_card UUID}}` | inline `pdf_card` mention |
-| `{{whiteboard UUID}}` | inline `whiteboard` mention |
-| `{{date YYYY-MM-DD}}` | inline `date` mention |
-| `$x$`, `$$x$$` | `math_inline`, `math_display` |
+| GFM pipe tables | `table`, with the header row on |
+| `$x$` | `math_inline` |
+| `$$` on its own line, the formula, then `$$` on its own line | `math_display` |
 | `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `[link](url)` | marks |
+| `<hepta-mention type="card" id="<cardId>">Card title</hepta-mention>` | inline mention |
+| `<hepta-embed type="card" id="<cardId>">Card title</hepta-embed>` | `embed` block |
+| `![alt](<fileUri or URL>){width=60% alignment=left}` | `image` block |
+| `<hepta-video src="<fileUri or URL>" width="60%" alignment="left"></hepta-video>` | `video` block |
+| `<hepta-audio src="<fileUri or URL>"></hepta-audio>` | `audio` block |
+| `<hepta-file src="<fileUri or URL>"></hepta-file>` | `file` block |
+| `<hepta-color type="text" color="blue">text</hepta-color>` | `color` mark (`type="background"` for a background color) |
 
-Below is an example with inline mentions, an image block, a standalone video line (note the blank lines), and a todo item:
+Below is an example with inline mentions, an imported image, a YouTube video, display math, and a todo item:
 
 ```markdown
 # Sprint notes
 
-Discussed in {{card 11111111-1111-4111-8111-111111111111}} on {{date 2026-06-04}}.
+Discussed in <hepta-mention type="card" id="11111111-1111-4111-8111-111111111111">Sprint plan</hepta-mention> on <hepta-mention type="journal" id="2026-06-04">2026-06-04</hepta-mention>.
 
-This is an image:
+![Architecture diagram](heptabase://file/33333333-3333-4333-8333-333333333333){width=60% alignment=left}
 
-![](https://example.com/diagram.png)
+<hepta-video src="https://www.youtube.com/watch?v=example"></hepta-video>
 
-This is a video:
-
-{{youtube https://www.youtube.com/watch?v=example}}
+$$
+E = mc^2
+$$
 
 - [ ] Summarize the recording
 ```
 
-Video markdown rules:
+### Mentions And Embeds
 
-- The whole line must be only `{{video URL}}`, `{{youtube URL}}`, `{{vimeo URL}}`, or `{{bilibili URL}}` — no text before or after on the same line.
-- Put a blank line before and after the video line when other blocks are nearby.
-- Invalid: `Watch this: {{youtube https://...}}` (trailing text prevents a `video` block).
+- Mention types: `card`, `journal`, `whiteboard`, `pdfCard`, `section`, `tag`, `highlightElement`, `imageCard`, `videoCard`, `audioCard`, `webCard`, and `chat`. A `journal` mention's `id` is its date, `YYYY-MM-DD`.
+- Embed types: `card`, `journal`, `highlightElement`, `imageCard`, `videoCard`, and `audioCard`.
+- Take every ID from a CLI read, list, or command result. Use the object's full title as the tag text.
+- A mention of one block (with a `line` attribute) is not supported here and is written as plain text. Mention the whole object.
+- Use `<hepta-mention>` for references to Heptabase objects. A Markdown link to a `heptabase://` URL stays an ordinary link.
+
+### Media
+
+- Put each media line on its own line. An image inside a sentence is dropped, and a media tag inside a sentence is written as text.
+- `src` is a file URI from `file import`, `file list`, or a read, or an `http` or `https` URL for external media such as a YouTube video. Copy file URIs unchanged: the CLI does not check them, and a wrong one leaves a broken image. Any other `src` is written as text.
+- Images use `{width=… alignment=…}` after the image; videos use `width` and `alignment` attributes on the tag. `width` is a percentage and `alignment` is `left`, `center`, or `right`. Audio and file tags take neither.
+- An image written this way has no `originalWidth` or `originalHeight`. The desktop app fills them in the first time it shows the image, which changes the note's `contentMd5`, so read the note again before a `save` or an `append --content-md5`.
+
+### Colors And Protected Content
+
+- Add color only when the user asks for it. Colors: `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, and `red`.
+- Never write `<hepta-highlight>`; it carries existing highlight data.
+- `object read` shows content that Hepta Markdown cannot express as protected regions: `<hepta-placeholder … />`, `<hepta-bookmark>…</hepta-bookmark>`, and complex `<hepta-table>…</hepta-table>` regions. `create` and `append` reject content that contains one with `invalidInput`. To keep such content, edit the ProseMirror JSON from `note read` or `journal read` with `save`.
 
 ## ProseMirror Nodes
 
@@ -176,7 +195,7 @@ Some attrs remain in the schema as legacy. When **creating** new JSON, omit them
 <!-- prettier-ignore -->
 | Node or mark | Deprecated attrs | Notes |
 | --- | --- | --- |
-| `image` | `alt`, `title` | Markdown import ignores them; use `fileId` / `src` and `alignment` instead |
+| `image` | `alt`, `title` | Use `fileId` / `src` and `alignment` instead |
 | `video` | `source` | Legacy iframe `data-source`; use `fileId` or `url` |
 | `link` | `title`, `data-internal-href`, `edited` | Use `href` only for new external links; internal links are resolved by the app |
 
@@ -429,5 +448,6 @@ Use `!` to enable line wrapping, for example `!typescript`. For Mermaid code blo
 - Don't use `people` inline mentions through the CLI schema.
 - Don't add `highlight` or `anchor` marks when creating new content.
 - Don't set deprecated attrs on new content; preserve them only when editing existing JSON from `read`.
+- Don't put file URIs in ProseMirror JSON node attrs (`src`, `url`, or `fileId`); media nodes take the bare `fileId`. File URIs belong only in Hepta Markdown media lines.
 - Don't assume `embed` and block `mention` can target every card type; use only `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`.
 - Don't edit Heptabase local database files directly to bypass the CLI.
