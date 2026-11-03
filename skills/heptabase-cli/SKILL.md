@@ -1,6 +1,6 @@
 ---
 name: heptabase-cli
-description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, and properties; list, query, create, and edit tags and tag databases; read chats, messages, files, highlights, and backlinks; import local files and URLs, save PDF, image, audio, video, YouTube, and web page cards, and parse PDFs; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
+description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, and properties; list, query, create, and edit tags and tag databases; read chats, messages, files, highlights, and backlinks; go through and organize the Inbox; import local files and URLs, save PDF, image, audio, video, YouTube, and web page cards, and parse PDFs; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
   heptabase-cli-version-range: "0.9.x"
@@ -36,6 +36,7 @@ Use these as quick recipes for frequent requests. For less common flags or if a 
 - **List tags:** `heptabase tag list` returns the tag tree as `{ content }` text with each tag's ID and card count. Narrow it with `--name-filter <text>`, or list one branch with `--parent-tag-id <tagId>`.
 - **Find cards by property value, or change a tag database:** first read `references/tag-databases.md`, then run `heptabase tag query <tagId> --fields "title,<propertyId>" --filter <json>`, or `heptabase tag edit <tagId> --edits <path|->` to add properties, options, and views.
 - **Find what links to an object:** `heptabase object backlinks <objectType> <objectId>` lists the cards, journals, and whiteboards that link to, mention, or place it, as `{ content }` text. Types: `card`, `pdfCard`, `journal` (ID `YYYY-MM-DD`), `highlightElement`, `imageCard`, `videoCard`, `audioCard`, `webCard`, `whiteboard`. Page with `--offset` and `--limit` (default 20, max 50); the text names the next offset.
+- **Go through the Inbox:** `heptabase inbox list` returns the All tab as `{ content }` text with each item's inbox item ID. Narrow it with `--unread`, `--kinds card`, or `--states later,done`, and page with `--offset` and `--limit` (default 20, max 100). Before adding, updating, or removing items, read the Inbox section below.
 - **Read highlights:** `heptabase card highlights <cardId>` reads the highlights on a note card or PDF card, with each highlight's note, as `{ content }` text. Page with `--offset` and `--limit` (default 30, max 50).
 - **Read parsed PDF content:** first read `references/pdf-reading.md`, then use `heptabase pdf metadata <pdfCardId>` to discover `parsedStatus` and `totalPages`. If `parsedStatus` is not `"success"`, run `heptabase pdf parse <pdfCardId>` until it is. Then read a page range with `heptabase pdf read <pdfCardId> --start-page N --end-page N`.
 - **Read transcript content:** first read `references/transcript-reading.md`, then use `heptabase audio metadata <audioCardId>` or `heptabase video metadata <videoCardId>` to discover `transcriptStatus` and `durationSeconds`, and read overlapping transcript entries in a time range with `heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300` or `heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300`.
@@ -103,6 +104,17 @@ The existing `whiteboard cards`, `add-card`, and `remove-card` commands are narr
 
 The canonical mutation commands cover whiteboard hierarchy and shortcuts; object placement and cross-whiteboard moves; move, arrange, align, resize, color, and removal; Sections and connections; and mind-map creation and updates. Run `heptabase whiteboard --help` for the current list and read the linked references for nested input.
 
+## Inbox
+
+The Inbox holds the cards and chat messages the user added, and the mentions, replies, quotes, and invites they received. Creating a card never puts it there; use `inbox add` only when the user wants a card in their Inbox.
+
+- `inbox list` lists the All tab (`--states active`) by default. `later` holds items reminded for a date after today, and `done` the finished ones. To check whether cards are in the Inbox, pass `--card-ids <ids>` with `--states active,later,done`.
+- `inbox add <cardIds...>` works like the app's Add to Inbox and needs a subscription. A card already in the Inbox moves back to the top and out of Done. `--remind-date YYYY-MM-DD` (the user's local date, after today) keeps it in Later until then; without it, an earlier remind date is cleared. Journals cannot be added.
+- `inbox update <inboxItemIds...>` takes `--status done|read|unread`, `--remind-date YYYY-MM-DD` or `--clear-remind-date`, or a status and a date together. `unread` also moves a done item back to the top. Marking a card done does not file it: when the user is processing their Inbox, place the card on a whiteboard or tag it first.
+- `inbox remove <inboxItemIds...>` removes only items the user added; the cards and messages stay. Mark mentions, replies, quotes, and invites done instead.
+
+`inbox update` and `inbox remove` take inbox item IDs from `inbox list`, not card IDs. The commands have no undo, so list first and change only what the user asked for. Each prints `{ content }` text and exits non-zero when the request fails or every item failed; when it exits `0`, read the text for items that failed.
+
 ## Canonical JSON input
 
 Commands with nested or batch data accept `--input <path|->`; `-` reads JSON from stdin. `tag edit` takes its edits array the same way, with `--edits <path|->`. Build JSON with `jq` or write it to a temporary file. Do not interpolate untrusted text into hand-built shell JSON.
@@ -111,7 +123,7 @@ Inspect every mutation result. A handled top-level `status: "failed"` is printed
 
 ## All output is JSON
 
-Every command prints its result as JSON to stdout, including a handled `status: "failed"` result. You can parse it with `jq` or pipe it to other tools. Errors are printed as JSON to stderr, with an `error` field that is a message or `{ code, message, retryable }`, and the command exits with status `1`. Some reads, such as `tag list`, `tag query`, `object backlinks`, and `card highlights`, return a `content` string written for you to read; do not parse it. `whiteboard screenshot` writes the PNG to `--output` and prints metadata only; it never prints image bytes.
+Every command prints its result as JSON to stdout, including a handled `status: "failed"` result. You can parse it with `jq` or pipe it to other tools. Errors are printed as JSON to stderr, with an `error` field that is a message or `{ code, message, retryable }`, and the command exits with status `1`. Some commands, such as `tag list`, `tag query`, `object backlinks`, `card highlights`, and the `inbox` commands, return a `content` string written for you to read; do not parse it. `whiteboard screenshot` writes the PNG to `--output` and prints metadata only; it never prints image bytes.
 
 ## Troubleshooting
 
