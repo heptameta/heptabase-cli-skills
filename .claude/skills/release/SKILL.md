@@ -16,7 +16,8 @@ This repo ships a public plugin package installed via the Claude Code marketplac
 - **`.claude-plugin/plugin.json` `version` is the single source of truth.** Claude Code resolves the version as: `plugin.json` → `marketplace.json` plugin entry → commit SHA. Never add a `version` to a `marketplace.json` plugin entry — it would silently shadow future strategy changes.
 - **`.cursor-plugin/plugin.json` must mirror the same version** on every release (Cursor reads its version from that file).
 - **Tag format:** `vX.Y.Z` matching the manifest version.
-- **GitHub release title:** `Compatible with CLI v<range>`, where `<range>` is `metadata.heptabase-cli-version-range` from `skills/heptabase-cli/SKILL.md` (e.g. `0.4.x` → "Compatible with CLI v0.4.x"). The title states compatibility, not features, and stays identical across releases in the same CLI range.
+- **CLI compatibility is a minimum version.** `metadata.heptabase-cli-version-range` in `skills/heptabase-cli/SKILL.md` is `>=X.Y.Z`: the oldest CLI that has every command the skill itself names. The skill leaves command details to the CLI's own System Manual and `--help`, which ship with each CLI, so a newer CLI does not need a new skill release.
+- **GitHub release title:** `Compatible with CLI v<minimum> and later`, from that range (e.g. `>=0.10.0` → "Compatible with CLI v0.10.0 and later"). The title states compatibility, not features, and stays identical across releases with the same minimum.
 - **Release notes are auto-generated from merged PR titles** (`--generate-notes`). There is no CHANGELOG file. This means changes should land via PRs with clear conventional-commit titles (`feat: ...`, `fix: ...`) — the PR title is the changelog entry.
 
 ## Version bump rules
@@ -24,7 +25,7 @@ This repo ships a public plugin package installed via the Claude Code marketplac
 | Bump  | When                                                                                                        |
 | ----- | ----------------------------------------------------------------------------------------------------------- |
 | patch | Documentation-only skill fixes; no CLI compatibility change                                                 |
-| minor | New CLI commands supported, new non-breaking CLI behavior, or a new CLI compatibility range                 |
+| minor | New CLI commands supported, new non-breaking CLI behavior, or a higher minimum CLI version                  |
 | major | Rare package-level changes only: plugin rename, removing the primary skill, changing the distribution model |
 
 ## Bundled scripts
@@ -32,7 +33,7 @@ This repo ships a public plugin package installed via the Claude Code marketplac
 Run from anywhere inside the repo; they locate the repo root themselves.
 
 - `scripts/bump-version.mjs <patch|minor|major|X.Y.Z> [--dry-run]` — updates both plugin manifests together (prepares both replacements, writes both, then re-reads to verify). Refuses to run if the manifests are out of sync, the target version does not advance, or a manifest does not contain exactly one `"version": "…"` needle. Prints JSON. It does NOT touch `metadata.heptabase-cli-version-range` — that is a judgment call (step 5).
-- `scripts/preflight.mjs [--skip-validators]` — read-only release-readiness report: manifest sync, marketplace version rule, CLI range consistency (frontmatter vs prose), installed CLI vs declared range, clean tree, branch, tag availability, version advances past the latest origin tag (falls back to local tags only when origin is unreachable), and the three official validators (skills-ref, `claude plugin validate`, Cursor manifest). Exits non-zero on any FAIL. Prints the exact release-plan commands only when tag-ready: no FAILs, clean tree, on `main`, not behind `origin/main`, and validators were not skipped. On a feature branch it may still pass with no FAILs and tell you to land the PR first.
+- `scripts/preflight.mjs [--skip-validators]` — read-only release-readiness report: manifest sync, marketplace version rule, CLI range format and consistency (frontmatter vs prose), installed CLI vs the minimum, clean tree, branch, tag availability, version advances past the latest origin tag (falls back to local tags only when origin is unreachable), and the three official validators (skills-ref, `claude plugin validate`, Cursor manifest). Exits non-zero on any FAIL. Prints the exact release-plan commands only when tag-ready: no FAILs, clean tree, on `main`, not behind `origin/main`, and validators were not skipped. On a feature branch it may still pass with no FAILs and tell you to land the PR first.
 
 ## Release process
 
@@ -51,7 +52,7 @@ Run from anywhere inside the repo; they locate the repo root themselves.
    ```bash
    node .claude/skills/release/scripts/bump-version.mjs patch
    ```
-5. **Only if the supported CLI range changed** (e.g. CLI 0.4.x → 0.5.x): update `metadata.heptabase-cli-version-range` in `skills/heptabase-cli/SKILL.md` — in both the frontmatter and the prose sentence under Prerequisites that repeats the range. Preflight verifies they agree.
+5. **Only if the skill now names a command or behavior that older CLIs lack:** raise the minimum in `metadata.heptabase-cli-version-range` in `skills/heptabase-cli/SKILL.md` (e.g. `>=0.10.0` → `>=0.12.0`), in both the frontmatter and the prose sentence under Prerequisites that repeats it. Preflight verifies they agree. A newer CLI alone is not a reason to raise it.
 6. **Commit the bump** (and any CLI-range edit). Preflight requires a clean tree, so do not run it against uncommitted manifest edits.
 7. **Run preflight** and fix any FAILs:
    ```bash
@@ -65,7 +66,7 @@ Run from anywhere inside the repo; they locate the repo root themselves.
    ```
 10. **Publish the GitHub release** — again only with explicit confirmation. Use the exact command from preflight's release plan; it looks like:
     ```bash
-    gh release create vX.Y.Z --title "Compatible with CLI v0.4.x" --generate-notes
+    gh release create vX.Y.Z --title "Compatible with CLI v0.10.0 and later" --generate-notes
     ```
 11. **Verify:** `gh release view vX.Y.Z`. Installed users pick it up through the plugin update flows documented in README.md.
 

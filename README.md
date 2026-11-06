@@ -48,7 +48,7 @@ OpenCode auto-discovers all `SKILL.md` files under `~/.opencode/skills/`. No cha
 
 ## Update
 
-Update this skills package when the Heptabase CLI interface changes or when `heptabase --version` no longer matches the compatibility range declared in the skill frontmatter.
+The skill declares the oldest CLI it needs in its frontmatter (`heptabase-cli-version-range`) and leaves command details to the System Manual that ships with each CLI, so updating the desktop app does not require a skill update. Update this package to pick up new skill releases.
 
 For Claude Code marketplace installs, refresh the marketplace, update the plugin, then reload plugins:
 

@@ -35,7 +35,7 @@ This repo also ships a Cursor plugin manifest at `.cursor-plugin/plugin.json` (s
 ## Version Bump Guidelines
 
 - Use a patch bump for documentation-only skill fixes that do not change CLI compatibility.
-- Use a minor bump when the skill supports new CLI commands, new non-breaking CLI behavior, or a new CLI compatibility range.
+- Use a minor bump when the skill supports new CLI commands, new non-breaking CLI behavior, or a higher minimum CLI version.
 - Avoid major bumps for normal CLI interface changes. Reserve a major bump only for rare package-level changes, such as renaming the plugin, removing the primary skill, or changing the installation/distribution model.
 
 ## Release Checklist
@@ -47,7 +47,7 @@ Use the bundled scripts from the release skill (they locate the repo root themse
    ```bash
    node .claude/skills/release/scripts/bump-version.mjs patch
    ```
-3. Update `skills/heptabase-cli/SKILL.md` `metadata.heptabase-cli-version-range` only when the supported CLI range changes (frontmatter and the Prerequisites prose must match).
+3. Raise the minimum in `skills/heptabase-cli/SKILL.md` `metadata.heptabase-cli-version-range` (`>=X.Y.Z`) only when the skill starts naming a command or behavior that older CLIs lack (frontmatter and the Prerequisites prose must match). A newer CLI alone does not need a skill release.
 4. Commit the bump (and any CLI-range edit).
 5. Run preflight and fix any FAILs:
    ```bash
