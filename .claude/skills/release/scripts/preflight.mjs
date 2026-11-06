@@ -119,6 +119,7 @@ if (!marketplace) {
 // --- CLI compatibility range ------------------------------------------------
 
 let cliRange = null;
+let cliMinVersion = null;
 try {
   const skillMd = await fs.readFile(path.join(repoRoot, "skills/heptabase-cli/SKILL.md"), "utf8");
   const frontmatterEnd = skillMd.indexOf("---", 3);
@@ -130,6 +131,17 @@ try {
   } else {
     cliRange = rangeMatch[1];
     record("PASS", "cli-range-declared", `Skill declares CLI compatibility range ${cliRange}.`);
+    const minMatch = /^>=(\d+\.\d+\.\d+)$/.exec(cliRange);
+    if (minMatch) {
+      cliMinVersion = minMatch[1];
+      record("PASS", "cli-range-format", `Range is a minimum CLI version (${cliMinVersion}).`);
+    } else {
+      record(
+        "FAIL",
+        "cli-range-format",
+        `Range ${cliRange} is not a minimum version like ">=0.10.0"; the skill declares only the oldest CLI it needs.`,
+      );
+    }
     if (body.includes(`\`${cliRange}\``)) {
       record("PASS", "cli-range-consistent", "Prose in SKILL.md repeats the same range as the frontmatter.");
     } else {
@@ -144,21 +156,20 @@ try {
   record("FAIL", "cli-range-declared", "Could not read skills/heptabase-cli/SKILL.md.");
 }
 
-if (cliRange) {
+if (cliMinVersion) {
   const cliVersion = run("heptabase", ["--version"], { timeout: 15_000 });
   if (!cliVersion.ok) {
     record("SKIP", "installed-cli-matches-range", "heptabase CLI not available here; cannot cross-check the range.");
   } else {
     const installed = parseSemver(cliVersion.output);
-    const rangePrefix = /^(\d+)\.(\d+)\.x$/.exec(cliRange);
-    if (installed && rangePrefix && `${installed[0]}.${installed[1]}` === `${rangePrefix[1]}.${rangePrefix[2]}`) {
-      record("PASS", "installed-cli-matches-range", `Installed CLI ${cliVersion.output} is within ${cliRange}.`);
+    if (installed && compareSemver(installed, parseSemver(cliMinVersion)) >= 0) {
+      record("PASS", "installed-cli-matches-range", `Installed CLI ${cliVersion.output} meets ${cliRange}.`);
     } else {
       record(
         "WARN",
         "installed-cli-matches-range",
-        `Installed CLI is ${cliVersion.output}, declared range is ${cliRange}. ` +
-          "If the CLI interface changed, the range (and a minor bump) may be needed.",
+        `Installed CLI is ${cliVersion.output}, older than ${cliRange}. ` +
+          "Install a desktop app that ships a CLI in range to check the skill against it.",
       );
     }
   }
@@ -307,7 +318,7 @@ if (failed) {
 
 const tagReady =
   Boolean(version) &&
-  Boolean(cliRange) &&
+  Boolean(cliMinVersion) &&
   gitClean &&
   onMain &&
   notBehindOrigin &&
@@ -316,7 +327,7 @@ const tagReady =
 if (tagReady) {
   console.log(`Release plan for v${version} (each step needs explicit maintainer confirmation):`);
   console.log(`  1. git tag v${version} && git push origin v${version}`);
-  console.log(`  2. gh release create v${version} --title "Compatible with CLI v${cliRange}" --generate-notes`);
+  console.log(`  2. gh release create v${version} --title "Compatible with CLI v${cliMinVersion} and later" --generate-notes`);
   console.log(`  3. gh release view v${version}`);
 } else {
   const blockers = [];
@@ -324,7 +335,7 @@ if (tagReady) {
   if (!onMain) blockers.push("not on main");
   if (!notBehindOrigin) blockers.push("behind origin/main or could not compare");
   if (!validatorsRan) blockers.push("validators were skipped");
-  if (!version || !cliRange) blockers.push("version or CLI range is missing");
+  if (!version || !cliMinVersion) blockers.push("version or CLI range is missing");
   console.log(
     `Checks passed with no FAILs, but not tag-ready yet (${blockers.join("; ")}). ` +
       "Land via PR if needed, then rerun preflight on updated main to get the release plan.",
