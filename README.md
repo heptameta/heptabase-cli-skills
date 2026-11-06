@@ -32,7 +32,7 @@ cp -R skills/heptabase-cli ~/.agents/skills/heptabase-cli
 
 See the [Agent Skills specification](https://agentskills.io/specification) for the standard skill format.
 
-Codex sandbox note: if Heptabase starts but Codex says the CLI server is not ready, see [Codex sandbox troubleshooting](skills/heptabase-cli/references/codex-sandbox.md).
+Codex sandbox note: if the desktop app is open with the CLI on but `heptabase` commands still cannot connect, the sandbox is blocking localhost. Retry outside the sandbox, or add `network_access = true` under `[sandbox_workspace_write]` in `~/.codex/config.toml` and restart Codex.
 
 ### OpenCode
 
@@ -81,4 +81,4 @@ cp -R skills/heptabase-cli ~/.agents/skills/heptabase-cli
 <!-- prettier-ignore -->
 | Skill                                 | Description                                                                                                                                                                |
 |---|---|
-| [heptabase-cli](skills/heptabase-cli) | Use Heptabase CLI for notes, journals, tags, cards, files, whiteboard structure and layout, mind-map work, schematic screenshots, goals, courses, and lessons |
+| [heptabase-cli](skills/heptabase-cli) | Use Heptabase CLI for search, notes, journals, Space Instructions, the Inbox, tags, cards, files, whiteboard structure and layout, mind-map work, schematic screenshots, goals, courses, and lessons. Points agents to the CLI's own System Manual |

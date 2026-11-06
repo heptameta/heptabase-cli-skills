@@ -1,139 +1,58 @@
 ---
 name: heptabase-cli
-description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Read and edit notes, journals, and properties; list, query, create, and edit tags and tag databases; read chats, messages, files, highlights, and backlinks; import local files and URLs, save PDF, image, audio, video, YouTube, and web page cards, and parse PDFs; and work with whiteboard structure and layout through the running desktop app, including sections, connections, mind maps, lint, and schematic screenshots. Also browse AI Tutor goals, courses, and lessons. Do not open Heptabase links in an agent browser unless the user asks.
+description: Use the local heptabase CLI whenever the user mentions Heptabase or shares an app.heptabase.com URL/deep link. Search the knowledge base by keyword or meaning; read, create, and edit notes and journals in Hepta Markdown; follow and update Space Instructions; process the Inbox; work with tags, tag databases, and properties; read chats, files, highlights, backlinks, PDFs, and transcripts; save files, web pages, and YouTube videos as cards; and organize, lay out, and visualize whiteboards and mind maps through the running desktop app. Also browse AI Tutor goals, courses, and lessons. The CLI's own System Manual holds the detailed rules. Do not open Heptabase links in an agent browser unless the user asks.
 allowed-tools: Bash(heptabase *) Bash(jq *) Bash(mktemp *)
 metadata:
-  heptabase-cli-version-range: "0.9.x"
+  heptabase-cli-version-range: "0.10.x"
 ---
 
 ## Prerequisites
 
 - CLI installed from the desktop app. The command is `heptabase` on macOS/Linux; Windows installs `heptabase.cmd` for cmd/PowerShell and a `heptabase` shim for POSIX shells.
-- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.9.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
+- Check version compatibility before use with `heptabase --version`. If the installed CLI version is outside this skill's compatibility range (`0.10.x`), you MUST stop and ask the user to update either the Heptabase desktop app or this skill package before continuing.
 
-## Command discovery
+## Read the CLI System Manual first
 
-Run `heptabase help` to see all available top-level commands. This is always up to date. Each command supports `--help` for detailed usage:
+The CLI ships its own System Manual: how to work in Heptabase with the CLI. It is the source of truth for Space Instructions, output and errors, Heptabase links, object types, writing and editing content, tag databases and properties, the Inbox, saving sources, reading files, organizing the knowledge base, and whiteboard layout, visualization, and mind maps. This skill gets you to it and adds only what it does not cover.
 
-```bash
-heptabase help
-heptabase note --help
-heptabase note create --help
-```
+- Before your first other `heptabase` command in a session, run `heptabase system-manual read concepts` and follow it. It starts by having you read the user's Space Instructions with `heptabase space-instructions read`, and it ends with the other pages and when to read each.
+- Before a task that a page's description covers, read that page with `heptabase system-manual read <path>`. Without a path, the command lists every page. It works without the desktop app.
+- When a command's `--help` says "Before first use, read the `<path>` page", read that page before you first run the command.
+- `heptabase --help` lists the commands, and `heptabase <command> <subcommand> --help` shows usage. For commands that take JSON (`--input`, `tag edit --edits`, `tag query --filter` and `--sorts`), `--help` also prints the JSON Schema of that input; write the JSON from it.
 
-## Common recipes
+## Not in the manual
 
-Use these as quick recipes for frequent requests. For less common flags or if a command fails, run `heptabase help` or `<command> --help` to discover the correct syntax.
+These details are not in the System Manual or `--help` yet. Everything else is.
 
-- **Recent cards:** `heptabase card list --sort createdTime --direction descending --limit 20`
-- **Today's journal:** `heptabase journal read $(date +%Y-%m-%d)`
-- **Search cards by keyword:** `heptabase card list -q "<keyword>" --limit 20`
-- **Create a note from markdown:** `heptabase note create --content "# Title\n\nBody"` (marks Created by AI by default; add `--no-created-by-ai` for human-owned content).
-- **Create today's journal from markdown:** `heptabase journal create --content "Body"` (marks Created by AI by default; add `--no-created-by-ai` for human-owned content).
-- **Append markdown to a note:** `heptabase note append <cardId> --content "More content"`.
-- **Edit note content with JSON save:** first read `references/card-content-schema.md`, then use `heptabase note read <cardId>`, modify the returned ProseMirror JSON, and save with `heptabase note save <cardId> --content-md5 <contentMd5> --content-file <path>`.
-- **Work with properties:** use `heptabase tag cards <tagId> --include-properties` to list tagged cards with values, or `heptabase card properties <cardIdOrDate>` to inspect one card. Before writing, read `references/property-values.md`, inspect definitions with `heptabase tag properties <tagId>`, then use `heptabase card set-property <cardIdOrDate> --property-id <propertyId> --value "Published"` for strings/options or `--json-value ...` for typed JSON values.
-- **List tags:** `heptabase tag list` returns the tag tree as `{ content }` text with each tag's ID and card count. Narrow it with `--name-filter <text>`, or list one branch with `--parent-tag-id <tagId>`.
-- **Find cards by property value, or change a tag database:** first read `references/tag-databases.md`, then run `heptabase tag query <tagId> --fields "title,<propertyId>" --filter <json>`, or `heptabase tag edit <tagId> --edits <path|->` to add properties, options, and views.
-- **Find what links to an object:** `heptabase object backlinks <objectType> <objectId>` lists the cards, journals, and whiteboards that link to, mention, or place it, as `{ content }` text. Types: `card`, `pdfCard`, `journal` (ID `YYYY-MM-DD`), `highlightElement`, `imageCard`, `videoCard`, `audioCard`, `webCard`, `whiteboard`. Page with `--offset` and `--limit` (default 20, max 50); the text names the next offset.
-- **Read highlights:** `heptabase card highlights <cardId>` reads the highlights on a note card or PDF card, with each highlight's note, as `{ content }` text. Page with `--offset` and `--limit` (default 30, max 50).
-- **Read parsed PDF content:** first read `references/pdf-reading.md`, then use `heptabase pdf metadata <pdfCardId>` to discover `parsedStatus` and `totalPages`. If `parsedStatus` is not `"success"`, run `heptabase pdf parse <pdfCardId>` until it is. Then read a page range with `heptabase pdf read <pdfCardId> --start-page N --end-page N`.
-- **Read transcript content:** first read `references/transcript-reading.md`, then use `heptabase audio metadata <audioCardId>` or `heptabase video metadata <videoCardId>` to discover `transcriptStatus` and `durationSeconds`, and read overlapping transcript entries in a time range with `heptabase audio read <audioCardId> --start-seconds 0 --end-seconds 300` or `heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300`.
-- **Read an attached file:** first read `references/file-reading.md`. If needed, find its `fileUri` with `heptabase file list --card-id <cardId>`, then run `mktemp -d` and `heptabase file export "<fileUri>" --output-dir <scratchDir>`. Read the returned `path` with your native file-reading tool.
-- **Save a file, web page, or video to Heptabase:** first read `references/importing.md`. For a local file or a URL that serves a file, run `heptabase file import <path>` or `heptabase file import --url <url>`, then the `create` command for the returned `fileKind`, for example `heptabase pdf create --file-uri "<fileUri>"`. For a web page, run `heptabase web create --url <url>`; for a YouTube video, `heptabase video create --url <url>`.
-- **Add a local image to a note:** first read `references/importing.md`, then run `heptabase file import <path>` and append the returned `fileUri` as an image line: `heptabase note append <cardId> --content '![Diagram](<fileUri>)'`.
-- **Inspect a whiteboard:** `heptabase whiteboard read <whiteboardId> --mode structure`, then `heptabase whiteboard read-layout <whiteboardId>`.
-- **Read chat messages:** Copy a chat ID from `whiteboard read` output, then use `heptabase object read chat <chatId> --offset <n> --limit <n>` to paginate non-removed messages with their displayed author, timestamp, quoted content, and message content. For a whiteboard chat-messages element, use `heptabase object read chatMessagesElement <elementId> --offset <n> --limit <n>`.
-- **Check or view whiteboard layout:** run `heptabase whiteboard lint <whiteboardId>`. For visual review, first read `references/whiteboard.md`, then use `heptabase whiteboard screenshot <whiteboardId> --output <existingDirectory>/whiteboard.png` and inspect the returned local path.
-- **Change whiteboard layout or a mind map:** first read `references/whiteboard.md`; for mind maps, also read `references/mind-maps.md`. Commands with nested or batch input use `--input <path|->` and canonical JSON.
+### Reading
 
-## Heptabase URLs (Deep links)
+- **Journals over a period:** `heptabase journal read-range --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>` reads every journal in the inclusive range, oldest first, as `{ content }`, skipping dates without a journal. One call covers at most 185 days; read a longer period in several ranges.
+- **Chats:** copy a chat ID from `whiteboard read` output or a `/chat/<id>` link, then page through the chat's messages, with each message's author and any message it quotes, with `heptabase object read chat <chatId> --offset <n> --limit <n>`. For a chat-messages element on a whiteboard, use `heptabase object read chatMessagesElement <elementId>`.
+- **File URIs in reads:** `object read`, `whiteboard read`, and search results show a PDF or media card's own file as `file: <fileUri>`. Pass that URI to `file export` directly; you do not need `file list` first.
+- **AI Tutor:** `heptabase goal list` lists root goals with their courses; `heptabase course list` and `course read <courseId>` give courses and their syllabus; `heptabase lesson list <courseId>`, `lesson read <lessonId>`, and `lesson list-messages <lessonId>` give lessons, their plans and generated cards, and their chat messages. Read a generated card with `heptabase object read card <cardId>`.
 
-When the user shares a Heptabase URL (aka. deep link), use the CLI to read it — do NOT open it in a browser if the user does not explicitly ask you to (the app requires authentication and browsers used by agents are typically not logged in).
+### Writing
 
-URL patterns and how to handle them:
+- **Inline math:** `$x^2$` in Hepta Markdown becomes inline math. The opening `$` must be followed by a character that is neither a space nor a digit, and the closing `$` must follow a character that is not a space, so `$10 and $20` stays text.
 
-- **Journal card:** `https://app.heptabase.com/<workspaceId>/card/<YYYY-MM-DD>` → `heptabase journal read <YYYY-MM-DD>`
-- **Card by UUID:** `https://app.heptabase.com/<workspaceId>/card/<uuid>` → first run `heptabase card properties <uuid>` to discover the card type, then read its content with the matching command (`heptabase note read <uuid>`, `heptabase pdf metadata <uuid>`, `heptabase object read webCard <uuid>`, etc.).
-- **Whiteboard:** `https://app.heptabase.com/<workspaceId>/whiteboard/<uuid>` → run `heptabase whiteboard read <uuid> --mode structure` and `heptabase whiteboard read-layout <uuid>`. Read `references/whiteboard.md` before any layout mutation or visual judgment.
+### Tag databases
 
-The `<workspaceId>` segment in the URL is not needed by the CLI — extract only the card/whiteboard ID.
+- **Relation properties in `tag edit`:** in a `createProperty` edit for a `relation` property, `tagId` is the tag whose database the relation points at, not the tag you are editing.
+- **`tag query --filter`:** a rule on the field `keyword` (`contains` or `doesNotContain`) matches text in the card.
+- **`tag query` values:** an empty value is `null`, a date range is `YYYY-MM-DD to YYYY-MM-DD`, and a relation is a list of references such as `card/<cardId>` or `journal/<YYYY-MM-DD>`. Drop the `<type>/` prefix before you use an ID in a filter or `card set-property`.
 
-## Note and journal card content editing
+### Files
 
-`note create`, `note append`, `journal create`, and `journal append` take Hepta Markdown: ordinary Markdown plus Heptabase tags for mentions, embeds, media, and colors. It is the format `object read` returns, so content you read there can be written back once its line-number prefixes are stripped.
+- **`The workspace changed during file import.`:** the user switched spaces in the app while the file was importing. Ask them to switch back, then import again.
 
-`note save` and `journal save` take ProseMirror JSON. Before calling either, you MUST read `references/card-content-schema.md`. Also read it before writing Hepta Markdown beyond plain formatting, such as mentions, embeds, images, videos, math, tables, toggle/todo lists, or colors.
+### Whiteboards and mind maps
 
-## Created by AI marking
-
-`note create` and `journal create` mark content as Created by AI by default. `tag create` and the commands that make cards from files and URLs (`pdf`, `image`, `audio`, `video`, and `web create`) always mark what they create. Before deciding whether to pass `--no-created-by-ai`, or before creating a tag or card the user wants as their own, you MUST read `references/created-by-ai.md`.
-
-## Property editing
-
-Before setting a property value, you MUST read `references/property-values.md` and inspect the target property with `heptabase card properties <cardIdOrDate>` and/or `heptabase tag properties <tagId>`. Property formats vary by type, and relation writes replace the full relation value. For relation properties, use `heptabase tag properties <sourceTagId>` to get the property definition's `relationTargetTagId`, then list valid related cards before writing. To find cards by property value, use `tag query` (see `references/tag-databases.md`).
-
-## Tags and tag databases
-
-Before querying a tag database, creating a tag, editing a tag database's properties, options, or views, or organizing tags into groups and parents, you MUST read `references/tag-databases.md`. `tag create` returns two IDs: use `tagId`, not `id`, with the other `tag` commands.
-
-## File reading
-
-Before reading/listing files, exporting a file, or interpreting file URIs and media lines from `object read`, you MUST read `references/file-reading.md`.
-
-## Importing files and URLs
-
-Before importing a file or URL, making a card from a file, saving a web page or YouTube video, or adding an image to a note, you MUST read `references/importing.md`.
-
-## PDF reading
-
-Before parsing a PDF or reading parsed PDF content, you MUST read `references/pdf-reading.md`.
-
-## Transcript reading
-
-Before reading parsed media transcripts, you MUST read `references/transcript-reading.md`.
-
-## Whiteboard work
-
-Before deliberate placement, movement, arrangement, resizing, sectioning, connection work, removal, or visual verification, you MUST read `references/whiteboard.md`. It defines exact placement references, selection and destination shapes, read-before-write rules, and the verification loop.
-
-For mind-map creation or structural edits, also read `references/mind-maps.md`. Read the current mind map again before updating it so stable structural node IDs are current.
-
-The existing `whiteboard cards`, `add-card`, and `remove-card` commands are narrow legacy commands. Prefer `whiteboard read`, `read-layout`, and the canonical `--input` commands for structured whiteboard work.
-
-The canonical mutation commands cover whiteboard hierarchy and shortcuts; object placement and cross-whiteboard moves; move, arrange, align, resize, color, and removal; Sections and connections; and mind-map creation and updates. Run `heptabase whiteboard --help` for the current list and read the linked references for nested input.
-
-## Canonical JSON input
-
-Commands with nested or batch data accept `--input <path|->`; `-` reads JSON from stdin. `tag edit` takes its edits array the same way, with `--edits <path|->`. Build JSON with `jq` or write it to a temporary file. Do not interpolate untrusted text into hand-built shell JSON.
-
-Inspect every mutation result. A handled top-level `status: "failed"` is printed and exits with status `1`. A successful top-level result exits with `0` even when item results contain `failureReasonCode` fields, so check them before reporting full success.
-
-## All output is JSON
-
-Every command prints its result as JSON to stdout, including a handled `status: "failed"` result. You can parse it with `jq` or pipe it to other tools. Errors are printed as JSON to stderr, with an `error` field that is a message or `{ code, message, retryable }`, and the command exits with status `1`. Some reads, such as `tag list`, `tag query`, `object backlinks`, and `card highlights`, return a `content` string written for you to read; do not parse it. `whiteboard screenshot` writes the PNG to `--output` and prints metadata only; it never prints image bytes.
+- **`arrange-objects` and `align-objects` are all or nothing:** when the plan fails, the call returns `status: "failed"` and nothing moves.
+- **Mind map root:** `update-mind-map` cannot apply `moveNode`, `deleteSubtree`, or `setEdgeColor` to the root node; it fails with `rootMutationNotAllowed` and nothing changes.
+- **Narrow whiteboard commands:** `whiteboard add-card` leaves a card that is already on the whiteboard unchanged, unlike `place-objects`, which adds another instance each time. `whiteboard remove-card` removes every instance of the card. For other placement and layout work, use the commands that `whiteboard-layout` describes.
+- **No arbitrary shapes:** the CLI cannot draw shapes on a whiteboard.
 
 ## Troubleshooting
 
-- **Desktop app must be running.** The CLI communicates with a local server inside the app. If the app is closed, all commands fail. Run `heptabase start` to launch and wait for readiness.
-- **Codex sandbox may block the local CLI server.** If Heptabase starts but Codex says the CLI server is not ready, read `references/codex-sandbox.md`; retry `heptabase` commands outside the sandbox when Codex supports escalation.
-- **Mutations are serialized.** Write operations run one at a time to prevent conflicts. Reads are concurrent.
-- **Request body size limit.** The server rejects JSON request bodies larger than 1 MB. `file import` uploads can be up to 2000 MB.
-- **Request timeout.** The server times out JSON requests that take longer than 10 seconds to send their body.
-
-## Known limitations
-
-- **Auto-enabling local server/CLI install not supported.** If the local CLI server is disabled or CLI wiring is missing, the skill cannot repair it by itself; ask the user to enable Local CLI Server and CLI install from desktop settings first.
-- **File export is local-file-only.** `heptabase file export` works only when the file metadata and raw file are already available locally in the desktop app. It does not download missing files from cloud storage.
-- **Cards from files are not transcribed.** `audio create` and `video create --file-uri` do not transcribe the audio or video; ask the user to do that in the app.
-- **Some files cannot become cards.** Files that import as `fileKind: "file"`, including HEIC, HEIF, and TIFF photos and web pages imported with `file import --url`, have no card type. Convert photos to JPEG or PNG first, and save web pages with `web create`.
-- **Imported files cannot be deleted.** The CLI has no command to delete a file that `file import` added. Import only what you will use.
-- **Whiteboard scope is intentionally bounded.** The CLI cannot delete a whiteboard or underlying Card, move content across spaces, create arbitrary shapes, or perform one semantic whole-board auto-layout command. `remove-objects` removes canvas placements, not source Cards.
-- **No CLI undo command or Agent history.** Whiteboard mutations use the app's normal domain actions, but the CLI does not expose Agent chat undo, tool-call persistence, or the Agent screenshot checklist. Read first and verify the result yourself.
-- **Whiteboard content is local.** Whiteboard reads use content available in the running desktop app and do not run backend-only PDF, web, or YouTube enrichment. Use dedicated PDF and media commands, and `object read webCard <webCardId>` for a web card, for full source content.
-- **Screenshots are schematic.** They support spatial review but do not replace semantic reads or deterministic lint.
-- **Tag database edits only add and change.** `tag edit` cannot delete a tag, property, option, or view.
-
-## Warnings
-
-- **Use the CLI as the only data access path.** Never directly read, write, or modify Heptabase app data through local database files, app storage, cache files, internal endpoints, or any other non-CLI mechanism. If the CLI does not support the requested operation, stop and report that it is not supported.
+- **Codex sandbox:** `concepts` says to retry outside the sandbox when the app is open with the CLI on but commands cannot connect. For a lasting fix in Codex's `workspace-write` mode, ask the user to add `[sandbox_workspace_write]` with `network_access = true` to `~/.codex/config.toml` and restart Codex.
+- **Request limits:** the desktop app rejects a JSON request body over 1 MiB (1,048,576 bytes) and times out a request whose body takes more than 10 seconds to arrive. `file import` uploads can be up to 2000 MB.
